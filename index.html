@@ -1386,7 +1386,13 @@ const COLS=['atletas','avaliacoes','metas','torneios','jogos','relatorios'];
 const SB_LIBS=['https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js',
                'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js',
                'https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js'];
-function sbCfg(){ const c=window.TCC_CONFIG||{}; return {url:String(c.SUPABASE_URL||'').trim().replace(/\/+$/,''), key:String(c.SUPABASE_ANON_KEY||'').trim()}; }
+/* aceita a URL do projeto com ou sem a parte final (/rest/v1, /auth/v1...),
+   que é o que aparece copiado de algumas telas do painel do Supabase */
+function sbCfg(){
+  const c=window.TCC_CONFIG||{};
+  const url=String(c.SUPABASE_URL||'').trim().replace(/\/+$/,'').replace(/\/(rest|auth|storage|realtime)\/v1$/,'');
+  return {url, key:String(c.SUPABASE_ANON_KEY||'').trim()};
+}
 function sbConfigurado(){ const c=sbCfg(); return /^https:\/\/\S+$/.test(c.url) && c.key.length>30; }
 function carregarScript(src){ return new Promise((ok,falhou)=>{ const el=document.createElement('script'); el.src=src; el.onload=()=>ok(); el.onerror=()=>falhou(new Error('não carregou '+src)); document.head.appendChild(el); }); }
 /* a biblioteca vem do CDN, a não ser que a página já a tenha carregado */
