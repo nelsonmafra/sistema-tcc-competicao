@@ -1,0 +1,1389 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Sistema TCC Competição</title>
+<meta name="description" content="Programa de Tênis de Competição do Tênis Clube de Campinas — atletas, avaliações trimestrais, metas de PDI, torneios, jogos ao vivo e relatórios.">
+<style>
+  html{color-scheme:light dark}
+  body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif}
+  img{max-width:100%}
+  [hidden]:not([hidden=until-found]){display:none!important}
+</style>
+</head>
+<body>
+
+<style>
+:root{
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --clay:#1B6FD8; --clay-soft:#E7F0FC; --navy:#5C6470; --navy-soft:#EEF1F5;
+  --paper:#F2F4F7; --surface:#FFFFFF; --ink:#1A1D21; --muted:#7A8088; --line:#E8EAEE;
+  --ok:#2E9E52; --ok-soft:#E4F4E9; --warn:#C98A1B; --warn-soft:#FAF0DC; --bad:#DD3B2B; --bad-soft:#FBE5E2;
+  --shadow:0 1px 4px rgba(20,30,45,.07);
+  --sA:#1B6FD8; --sO:#8A919A;   /* padrão TBL: atleta azul, adversário cinza — identidade também por rótulo e posição */
+  --tgW:#43A047; --tgA:#1E88E5; --tgD:#E53935; --tgU:#8E24AA; --tgF:#FB8C00; /* winner/ace/df/enf/ef (validadas) */
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --clay:#4C93E8; --clay-soft:#1C2C42; --navy:#AEB6C2; --navy-soft:#242A33;
+    --paper:#0F1216; --surface:#1A1F26; --ink:#E9EBEE; --muted:#98A0AA; --line:#2C333C;
+    --ok:#57BC7C; --ok-soft:#1C3326; --warn:#D9A94F; --warn-soft:#39301C; --bad:#E56A5C; --bad-soft:#3B2320;
+    --shadow:0 1px 4px rgba(0,0,0,.45);
+    --sA:#4C93E8; --sO:#8A919A;
+    --tgW:#3F9A66; --tgA:#4E82C6; --tgD:#CC5240; --tgU:#9468CC; --tgF:#B5842E;
+  }
+}
+:root[data-theme="dark"]{
+  --clay:#4C93E8; --clay-soft:#1C2C42; --navy:#AEB6C2; --navy-soft:#242A33;
+  --paper:#0F1216; --surface:#1A1F26; --ink:#E9EBEE; --muted:#98A0AA; --line:#2C333C;
+  --ok:#57BC7C; --ok-soft:#1C3326; --warn:#D9A94F; --warn-soft:#39301C; --bad:#E56A5C; --bad-soft:#3B2320;
+  --shadow:0 1px 4px rgba(0,0,0,.45);
+  --sA:#4C93E8; --sO:#8A919A;
+  --tgW:#3F9A66; --tgA:#4E82C6; --tgD:#CC5240; --tgU:#9468CC; --tgF:#B5842E;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.5 var(--font);padding-bottom:76px}
+h1,h2,h3,.num{font-family:var(--font)}
+header{position:sticky;top:0;z-index:20;background:var(--surface);border-bottom:1px solid var(--line);padding:10px 16px;display:flex;align-items:center;gap:10px}
+.brand{font-family:var(--font);font-weight:800;font-size:17px;letter-spacing:.2px}
+.brand b{color:var(--clay)}
+.status{width:8px;height:8px;border-radius:50%;background:var(--warn);flex:none}
+.status.on{background:var(--ok)}
+.tri-nav{margin-left:auto;display:flex;align-items:center;gap:4px}
+.tri-nav button{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;width:30px;height:30px;font-size:15px;cursor:pointer}
+.tri-label{font-family:var(--font);font-weight:700;font-size:14px;min-width:76px;text-align:center}
+nav{position:fixed;bottom:0;left:0;right:0;z-index:20;background:var(--surface);border-top:1px solid var(--line);display:flex;justify-content:space-around;padding:6px 2px calc(6px + env(safe-area-inset-bottom))}
+nav button{flex:1;border:0;background:none;color:var(--muted);font:600 10.5px var(--font);display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 0;cursor:pointer;border-radius:8px}
+nav button .ic{font-size:18px;line-height:1}
+nav button.act{color:var(--clay)}
+main{max-width:860px;margin:0 auto;padding:14px}
+.sec-head{display:flex;align-items:center;gap:10px;margin:6px 0 12px}
+.sec-head h2{margin:0;font-size:19px;font-weight:800}
+.sec-head .cnt{color:var(--muted);font-size:13px}
+.btn{border:0;border-radius:12px;padding:10px 16px;font:600 14px var(--font);cursor:pointer;background:var(--clay);color:#fff}
+.btn.sec{background:var(--navy-soft);color:var(--navy)}
+.btn.ghost{background:none;color:var(--muted);border:1px solid var(--line)}
+.btn.sm{padding:6px 10px;font-size:12.5px;border-radius:8px}
+.add{margin-left:auto}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px 16px;margin-bottom:10px;box-shadow:var(--shadow)}
+.card h3{margin:0 0 2px;font-size:15.5px;font-weight:700}
+.sub{color:var(--muted);font-size:12.5px}
+.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.chip{display:inline-block;border-radius:99px;padding:2px 9px;font:600 11.5px var(--font);white-space:nowrap}
+.chip.ok{background:var(--ok-soft);color:var(--ok)} .chip.warn{background:var(--warn-soft);color:var(--warn)}
+.chip.bad{background:var(--bad-soft);color:var(--bad)} .chip.navy{background:var(--navy-soft);color:var(--navy)}
+.chip.clay{background:var(--clay-soft);color:var(--clay)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:16px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px;box-shadow:var(--shadow)}
+.kpi .num{font-size:26px;font-weight:800;line-height:1.1}
+.kpi .lbl{font-size:11.5px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-top:2px}
+.kpi .det{font-size:12px;color:var(--muted);margin-top:2px}
+.bar{height:6px;border-radius:4px;background:var(--line);overflow:hidden;margin-top:8px}
+.bar i{display:block;height:100%;background:var(--clay);border-radius:4px}
+.dims{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:10px}
+.dim{text-align:center}
+.dim .num{font-size:17px;font-weight:800}
+.dim .d-lbl{font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.3px}
+.delta{font-size:11px;font-weight:700}
+.delta.up{color:var(--ok)} .delta.dn{color:var(--bad)} .delta.eq{color:var(--muted)}
+.empty{border:1.5px dashed var(--line);border-radius:12px;padding:26px 16px;text-align:center;color:var(--muted);font-size:14px}
+dialog{border:0;border-radius:16px;background:var(--surface);color:var(--ink);width:min(560px,calc(100vw - 24px));max-height:88vh;padding:0;box-shadow:0 10px 40px rgba(0,0,0,.25)}
+dialog::backdrop{background:rgba(15,20,28,.5)}
+.dlg-h{position:sticky;top:0;background:var(--surface);display:flex;align-items:center;padding:14px 16px;border-bottom:1px solid var(--line);z-index:2}
+.dlg-h h3{margin:0;font-size:16px;font-weight:800}
+.dlg-h button{margin-left:auto;border:0;background:none;font-size:20px;color:var(--muted);cursor:pointer}
+.dlg-b{padding:14px 16px 18px}
+label{display:block;font:600 12px var(--font);color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin:12px 0 4px}
+input,select,textarea{width:100%;border:1px solid var(--line);border-radius:9px;background:var(--paper);color:var(--ink);font:14.5px var(--font);padding:9px 10px}
+textarea{min-height:64px;resize:vertical}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+.seg{display:flex;gap:5px}
+.seg button{flex:1;border:1px solid var(--line);background:var(--paper);color:var(--muted);border-radius:8px;padding:8px 0;font:700 14px var(--font);cursor:pointer}
+.seg button.on{background:var(--clay);border-color:var(--clay);color:#fff}
+.ck{display:flex;align-items:flex-start;gap:8px;font:400 13.5px var(--font);color:var(--ink);text-transform:none;letter-spacing:0;margin:8px 0}
+.ck input{width:auto;margin-top:2px}
+.dlg-f{display:flex;gap:8px;justify-content:flex-end;padding:0 16px 16px}
+.banner{background:var(--warn-soft);color:var(--warn);border-radius:10px;padding:10px 14px;font-size:13.5px;margin-bottom:12px}
+#toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%);z-index:99;background:var(--ink);color:var(--paper);padding:10px 18px;border-radius:10px;font:600 13.5px var(--font);box-shadow:0 4px 18px rgba(0,0,0,.3);max-width:92vw;text-align:center}
+#toast.err{background:var(--bad);color:#fff}
+.dlg-err{color:var(--bad);font:600 13px var(--font);padding:8px 16px 0;min-height:1em}
+.sb{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:14px;box-shadow:var(--shadow)}
+.sb-row{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:6px 0}
+.sb-nome{font:700 16px var(--font);display:flex;align-items:center;gap:7px;min-width:0}
+.sb-nome span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.srv{width:9px;height:9px;border-radius:50%;background:var(--clay);flex:none}
+.sb-nums{display:flex;gap:6px;align-items:center}
+.sb-set{font:700 17px var(--font);font-variant-numeric:tabular-nums;color:var(--muted);min-width:22px;text-align:center}
+.sb-set.won{color:var(--ink)}
+.sb-pts{font:800 26px var(--font);font-variant-numeric:tabular-nums;color:var(--clay);min-width:44px;text-align:center;background:var(--clay-soft);border-radius:8px;padding:2px 4px}
+.pt-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.pt-btns button{border:0;border-radius:14px;min-height:76px;font:700 15px var(--font);cursor:pointer;padding:10px}
+.pt-btns .pa{background:var(--sA);color:#fff}
+.pt-btns .po{background:var(--navy-soft);color:var(--navy)}
+.out-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.out-grid button{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:12px;min-height:54px;font:600 14px var(--font);cursor:pointer}
+.out-grid button.full{grid-column:1/-1}
+.out-title{font:700 14px var(--font);margin-top:12px;text-align:center}
+.out-title b{color:var(--clay)}
+/* relatório da partida */
+.rep-legend{display:flex;gap:12px;flex-wrap:wrap;font-size:11.5px;color:var(--muted);margin:8px 0}
+.rep-legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+.cmp{margin:10px 0}
+.cmp .c-lbl{text-align:center;font:600 12px var(--font);color:var(--muted);margin-bottom:3px}
+.cmp .c-row{display:grid;grid-template-columns:38px 1fr 38px;gap:8px;align-items:center;font-variant-numeric:tabular-nums}
+.cmp .c-val{font:700 14px var(--font)} .cmp .c-val.r{text-align:right}
+.cmp .c-bar{display:flex;height:10px;border-radius:5px;background:var(--line);overflow:hidden}
+.cmp .c-bar i{height:100%} .cmp .c-bar .bA{background:var(--sA);border-radius:5px 0 0 5px} .cmp .c-bar .bO{background:var(--sO);border-radius:0 5px 5px 0}
+.cmp .c-bar .gap{width:2px;background:var(--surface)}
+.lev-row{display:grid;grid-template-columns:110px 1fr;gap:8px;align-items:center;margin:8px 0}
+.lev-row .l-lbl{font:600 12px var(--font);color:var(--muted)}
+.lev-bars>div{display:flex;align-items:center;gap:6px;margin:2px 0;font:600 11.5px var(--font);color:var(--muted);font-variant-numeric:tabular-nums}
+.lev-bars i{display:block;height:9px;border-radius:4px;min-width:2px}
+.setsel{display:flex;gap:6px;margin:12px 0}
+.setsel button{border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:99px;padding:6px 14px;font:600 13px var(--font);cursor:pointer}
+.setsel button.on{background:var(--navy);border-color:var(--navy);color:#fff}
+.mom{overflow-x:auto;padding-bottom:6px}
+.mom-g{display:inline-block;vertical-align:top;border:1px solid var(--line);border-radius:10px;margin-right:8px;padding:6px 8px;background:var(--paper)}
+.mom-g .g-h{font:700 11px var(--font);color:var(--muted);text-align:center;margin-bottom:4px;white-space:nowrap}
+.mom-row{display:flex;gap:4px;align-items:flex-end;min-height:30px}
+.mom-row+.mom-row{margin-top:4px}
+.mom-pt{width:24px;text-align:center;font:700 11px var(--font);font-variant-numeric:tabular-nums;color:var(--muted);padding-bottom:2px;border-bottom:3px solid transparent}
+.mom-pt.won{color:var(--ink)}
+.mom-pt.press{position:relative}
+.mom-pt.press::after{content:"◉";position:absolute;left:0;right:0;top:-11px;font-size:8px;color:var(--muted)}
+svg text{font-family:var(--font)}
+@media print{ header,nav,#toast,.no-print{display:none!important} body{background:#fff;padding:0} main{max-width:100%;padding:0} .card{box-shadow:none;break-inside:avoid} }
+.live-actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.fim-banner{background:var(--ok-soft);color:var(--ok);border-radius:10px;padding:12px 14px;font:700 15px var(--font);text-align:center;margin-top:12px}
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{text-align:left;font:600 11px var(--font);color:var(--muted);text-transform:uppercase;letter-spacing:.4px;padding:4px 6px;border-bottom:1px solid var(--line)}
+.tbl td{padding:6px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+.scroll{overflow-x:auto}
+.mini{font-size:12px;color:var(--muted)}
+.stat-line{display:flex;gap:14px;flex-wrap:wrap;margin-top:6px;font-variant-numeric:tabular-nums;font-size:12.5px;color:var(--muted)}
+.stat-line b{color:var(--ink)}
+a.link{color:var(--clay)}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--navy);outline-offset:1px}
+@media(min-width:720px){ nav{position:sticky;top:52px;bottom:auto;border-top:0;border-bottom:1px solid var(--line);justify-content:flex-start;gap:4px;padding:4px 12px} nav button{flex:none;flex-direction:row;font-size:13px;padding:8px 12px} body{padding-bottom:20px} }
+@media (prefers-reduced-motion: reduce){ *{transition:none!important;animation:none!important} }
+</style>
+
+<header>
+  <div class="brand">TCC <b>Competição</b></div>
+  <div class="status" id="st" title="Conexão com o banco"></div>
+  <div class="tri-nav">
+    <button id="triPrev" aria-label="Trimestre anterior">‹</button>
+    <div class="tri-label" id="triLbl"></div>
+    <button id="triNext" aria-label="Próximo trimestre">›</button>
+  </div>
+</header>
+
+<nav id="nav">
+  <button data-t="painel" class="act"><span class="ic">◪</span>Painel</button>
+  <button data-t="atletas"><span class="ic">👤</span>Atletas</button>
+  <button data-t="avaliacoes"><span class="ic">✓</span>Avaliações</button>
+  <button data-t="metas"><span class="ic">◎</span>Metas</button>
+  <button data-t="torneios"><span class="ic">🏆</span>Torneios</button>
+  <button data-t="jogos"><span class="ic">🎾</span>Jogos</button>
+  <button data-t="relatorios"><span class="ic">📄</span>Relatórios</button>
+</nav>
+
+<main>
+  <div id="offline" class="banner" hidden>Sem conexão com o banco de dados compartilhado. Abra esta página pelo link publicado no claude.ai, logado, para lançar e ver os dados do programa.</div>
+  <section id="v-painel"></section>
+  <section id="v-atletas" hidden></section>
+  <section id="v-avaliacoes" hidden></section>
+  <section id="v-metas" hidden></section>
+  <section id="v-torneios" hidden></section>
+  <section id="v-jogos" hidden></section>
+  <section id="v-relatorios" hidden></section>
+</main>
+
+<dialog id="dlg"><div id="dlgInner"></div></dialog>
+
+<script>
+'use strict';
+/* ================= estado ================= */
+const S = { atletas:[], avaliacoes:[], metas:[], torneios:[], jogos:[], relatorios:[], tri: triOfDate(new Date()), db:null, tab:'painel', role:'coach' };
+const DIM_AV = [['tec','Técnica'],['tat','Tática'],['fis','Física'],['ati','Atitude'],['comp','Competit.']];
+const CRITERIOS = ['Domínio técnico dos fundamentos da etapa','Sustenta o jogo taticamente em partida','Rotina de treino com autonomia','Comportamento competitivo adequado','Volume/frequência compatíveis com a próxima etapa'];
+const BOLAS = ['Vermelha','Laranja','Verde','Amarela'];
+const QUADRAS = ['Saibro','Rápida (dura)','Grama sintética','Areia','Outra'];
+const TIPOS_TORNEIO = ['Interno TCC','Clubes da região','Federado FPT','Nacional CBT','COSAT / ITF','Kids'];
+const selOpts=(arr,selv)=>'<option value="">—</option>'+arr.map(o=>'<option '+(o===selv?'selected':'')+'>'+o+'</option>').join('');
+const $ = s=>document.querySelector(s);
+const esc = s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* ================= trimestres ================= */
+function triOfDate(d){ return d.getFullYear()+'-T'+(Math.floor(d.getMonth()/3)+1); }
+function triOfStr(s){ const d=new Date(s+'T12:00:00'); return isNaN(d)?null:triOfDate(d); }
+function triShift(tri,n){ let [y,q]=tri.split('-T').map(Number); q+=n; while(q>4){q-=4;y++} while(q<1){q+=4;y--} return y+'-T'+q; }
+function triLabel(tri){ const [y,q]=tri.split('-T'); return 'T'+q+' · '+y; }
+
+/* ================= avisos (alert/confirm são bloqueados no visualizador) ================= */
+let toastT=null;
+function toast(msg,err){ let t=$('#toast'); if(!t){ t=document.createElement('div'); t.id='toast'; document.body.appendChild(t);} t.textContent=msg; t.className=err?'err':''; t.hidden=false; clearTimeout(toastT); toastT=setTimeout(()=>{t.hidden=true},3500); }
+function errMsg(e){
+  const c=e&&e.code;
+  if(c==='not_granted'||c==='capability_disabled'||c==='capability_removed') return 'A página não recebeu acesso ao banco. Recarregue e autorize quando o aviso do Claude aparecer.';
+  if(c==='quota_exceeded') return 'Limite de registros do banco atingido — me avise para arquivarmos dados antigos.';
+  if(c==='invalid_argument') return 'Dados inválidos para o banco. Confira os campos e tente de novo.';
+  if(c==='revoked') return 'Seu acesso mudou — recarregue a página.';
+  return 'Falha temporária de conexão. Tente novamente em alguns segundos.';
+}
+/* ================= gravação ================= */
+async function save(col,body,id){
+  if(!S.db){ dlgErr('Sem conexão com o banco — abra o link logado no claude.ai.'); return false; }
+  body.ts=Date.now();
+  for(let tent=0;tent<2;tent++){
+    try{ if(id){ await S.db.collection(col).doc(id).set(body); } else { await S.db.collection(col).add(body); } toast('Salvo ✓'); return true; }
+    catch(e){ if((e&&e.code)==='unavailable' && tent===0){ await new Promise(r=>setTimeout(r,600+Math.random()*600)); continue; } dlgErr(errMsg(e)); return false; }
+  }
+  return false;
+}
+function dlgErr(msg){ const el=$('#dlgErrBox'); if(el&&$('#dlg').open){ el.textContent=msg; } else { toast(msg,true); } }
+const _armed={};
+window.del=function(btn,col,id){
+  if(!S.db) return;
+  if(_armed[id]){ clearTimeout(_armed[id]); delete _armed[id];
+    S.db.collection(col).doc(id).delete().then(()=>toast('Excluído')).catch(e=>toast(errMsg(e),true));
+  } else {
+    const old=btn.textContent; btn.textContent='confirmar?'; btn.style.color='var(--bad)';
+    _armed[id]=setTimeout(()=>{ delete _armed[id]; btn.textContent=old; btn.style.color=''; },3000);
+  }
+};
+
+/* ================= helpers de dados ================= */
+const atleta = id=>S.atletas.find(a=>a.id===id);
+const nomeA = id=>{const a=atleta(id);return a?a.nome:'(atleta removido)'};
+const ativos = ()=>S.atletas.filter(a=>a.ativo!==false).sort((a,b)=>a.nome.localeCompare(b.nome));
+const avalDoTri=(aid,tri)=>S.avaliacoes.filter(v=>v.atletaId===aid&&v.tri===tri).sort((a,b)=>b.ts-a.ts)[0]||null;
+function mediaNotas(v){ if(!v)return null; const ns=DIM_AV.map(([k])=>v.notas?.[k]).filter(n=>n>0); return ns.length?ns.reduce((a,b)=>a+b,0)/ns.length:null; }
+const jogosDoTri = tri=>S.jogos.filter(j=>j.finalizado!==false&&triOfStr(j.data)===tri);
+const tornDoTri  = tri=>S.torneios.filter(t=>triOfStr(t.data)===tri);
+function fmt(n,d=1){ return n==null?'—':(+n).toFixed(d).replace('.',','); }
+function selAtletas(sel,req=true){ return '<select id="'+sel+'" '+(req?'required':'')+'>'+ '<option value="">— selecione o atleta —</option>' + ativos().map(a=>'<option value="'+a.id+'">'+esc(a.nome)+' ('+esc(a.bola||a.categoria||'')+')</option>').join('')+'</select>'; }
+function segHtml(name,val){ return '<div class="seg" data-seg="'+name+'">'+[1,2,3,4,5].map(n=>'<button type="button" data-v="'+n+'" class="'+(val===n?'on':'')+'">'+n+'</button>').join('')+'</div>'; }
+function segWire(root){ root.querySelectorAll('[data-seg]').forEach(sg=>sg.querySelectorAll('button').forEach(b=>b.onclick=()=>{ sg.querySelectorAll('button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); })); }
+function segVal(root,name){ const on=root.querySelector('[data-seg="'+name+'"] button.on'); return on?+on.dataset.v:0; }
+
+/* ================= dialog ================= */
+function openDlg(title,bodyHtml,onSave,saveLbl){
+  const dlg=$('#dlg');
+  $('#dlgInner').innerHTML = '<div class="dlg-h"><h3>'+esc(title)+'</h3><button id="dlgX" aria-label="Fechar">✕</button></div>'
+    + '<div class="dlg-b">'+bodyHtml+'</div>'
+    + '<div class="dlg-err" id="dlgErrBox"></div>'
+    + '<div class="dlg-f"><button class="btn ghost" id="dlgCancel">Cancelar</button><button class="btn" id="dlgOk">'+esc(saveLbl||'Salvar')+'</button></div>';
+  segWire(dlg);
+  $('#dlgX').onclick=$('#dlgCancel').onclick=()=>dlg.close();
+  $('#dlgOk').onclick=async()=>{
+    const btn=$('#dlgOk'); if(btn.disabled) return;
+    $('#dlgErrBox').textContent=''; btn.disabled=true; const lbl=btn.textContent; btn.textContent='Salvando…';
+    try{ const ok=await onSave(dlg); if(ok!==false) dlg.close(); }
+    catch(e){ dlgErr(errMsg(e)); }
+    finally{ btn.disabled=false; btn.textContent=lbl; }
+  };
+  dlg.showModal();
+}
+
+/* ================= render ================= */
+function render(){
+  ({painel:rPainel,atletas:rAtletas,avaliacoes:rAval,metas:rMetas,torneios:rTorn,jogos:rJogos,relatorios:rRel})[S.tab]();
+  $('#triLbl').textContent = triLabel(S.tri);
+}
+
+/* ---------- PAINEL ---------- */
+function rPainel(){
+  const tri=S.tri, at=ativos();
+  const avTri = at.map(a=>avalDoTri(a.id,tri)).filter(Boolean);
+  const metasAb = S.metas.filter(m=>atleta(m.atletaId));
+  const metasCump = metasAb.filter(m=>m.status==='cumprida');
+  const jg = jogosDoTri(tri), tn = tornDoTri(tri);
+  const V = jg.filter(j=>j.resultado==='V').length, D = jg.filter(j=>j.resultado==='D').length;
+  const pend = at.filter(a=>!avalDoTri(a.id,tri));
+  const pct=(n,d)=>d?Math.round(100*n/d):0;
+
+  let h='<div class="kpis">'
+    +kpi(at.length,'Atletas ativos','')
+    +kpi(avTri.length+'/'+at.length,'Avaliações no tri',pct(avTri.length,at.length)+'% concluído',pct(avTri.length,at.length))
+    +kpi(metasCump.length+'/'+metasAb.length,'Metas cumpridas',metasAb.length?pct(metasCump.length,metasAb.length)+'% do total':'nenhuma meta lançada',pct(metasCump.length,metasAb.length))
+    +kpi(tn.length,'Torneios com relatório','no trimestre')
+    +kpi(jg.length,'Jogos anotados',jg.length? V+'V — '+D+'D':'no trimestre')
+    +'</div>';
+
+  if(pend.length && S.db) h+='<div class="banner">Sem avaliação neste trimestre: <b>'+pend.map(a=>esc(a.nome)).join(', ')+'</b></div>';
+
+  h+='<div class="sec-head"><h2>Análise trimestral por atleta</h2><span class="cnt">'+triLabel(tri)+' vs '+triLabel(triShift(tri,-1))+'</span></div>';
+  if(!at.length) h+='<div class="empty">Cadastre os atletas na aba <b>Atletas</b> para o painel ganhar vida.</div>';
+
+  for(const a of at){
+    const v=avalDoTri(a.id,tri), vPrev=avalDoTri(a.id,triShift(tri,-1));
+    const m=mediaNotas(v), mp=mediaNotas(vPrev);
+    const metasA=S.metas.filter(x=>x.atletaId===a.id);
+    const mc=metasA.filter(x=>x.status==='cumprida').length;
+    const jgA=jg.filter(j=>j.atletaId===a.id); const vA=jgA.filter(j=>j.resultado==='V').length;
+    let delta='';
+    if(m!=null&&mp!=null){ const d=m-mp; delta=' <span class="delta '+(d>0.05?'up':d<-0.05?'dn':'eq')+'">'+(d>0.05?'▲':d<-0.05?'▼':'●')+' '+fmt(Math.abs(d))+'</span>'; }
+    h+='<div class="card"><div class="row"><h3>'+esc(a.nome)+'</h3><span class="chip clay">'+esc(a.bola||'')+'</span><span class="chip navy">'+esc(a.categoria||'')+'</span>'
+      +(v? (v.parecer==='promovivel'?'<span class="chip ok">PROMOVÍVEL</span>':v.parecer==='observar'?'<span class="chip warn">observar</span>':'') : '<span class="chip warn">sem avaliação no tri</span>')
+      +'<span style="margin-left:auto"></span><button class="btn sm ghost" onclick="goDossie(\''+a.id+'\')">dossiê ›</button></div>';
+    if(v){
+      h+='<div class="row" style="margin-top:6px"><span class="num" style="font-size:22px;font-weight:800">'+fmt(m)+'</span><span class="mini">média geral'+(mp!=null?' (ant.: '+fmt(mp)+')':'')+'</span>'+delta+'</div>';
+      h+='<div class="dims">'+DIM_AV.map(([k,lbl])=>{
+        const n=v.notas?.[k]||0, np=vPrev?.notas?.[k];
+        const dl = (np&&n)? (n>np?' <span class="delta up">▲</span>':n<np?' <span class="delta dn">▼</span>':'') : '';
+        return '<div class="dim"><div class="num">'+(n||'—')+dl+'</div><div class="d-lbl">'+lbl+'</div></div>';
+      }).join('')+'</div>';
+      if(v.frequencia!=null&&v.frequencia!=='') h+='<div class="mini" style="margin-top:6px">Frequência: <b>'+esc(v.frequencia)+'%</b></div>';
+    }
+    h+='<div class="stat-line">'
+      +'<span>Metas: <b>'+mc+'/'+metasA.length+'</b> cumpridas</span>'
+      +'<span>Jogos no tri: <b>'+jgA.length+'</b>'+(jgA.length?' ('+vA+'V–'+jgA.filter(x=>x.resultado==='D').length+'D)':'')+'</span>'
+      +'</div></div>';
+  }
+  $('#v-painel').innerHTML=h;
+}
+function kpi(num,lbl,det,pct){ return '<div class="kpi"><div class="num">'+num+'</div><div class="lbl">'+lbl+'</div>'+(det?'<div class="det">'+det+'</div>':'')+(pct!=null?'<div class="bar"><i style="width:'+pct+'%"></i></div>':'')+'</div>'; }
+
+/* ---------- ATLETAS ---------- */
+function rAtletas(){
+  const list=ativos(), inat=S.atletas.filter(a=>a.ativo===false);
+  let h='<div class="sec-head"><h2>Atletas</h2><span class="cnt">'+list.length+' ativos</span><button class="btn add" onclick="fAtleta()">+ Atleta</button></div>';
+  if(!list.length) h+='<div class="empty">Nenhum atleta ainda. Comece cadastrando a equipe e a base.</div>';
+  for(const a of list){
+    h+='<div class="card"><div class="row"><h3>'+esc(a.nome)+'</h3><span class="chip clay">'+esc(a.bola||'')+'</span><span class="chip navy">'+esc(a.categoria||'')+'</span>'
+      +'<span style="margin-left:auto"></span><button class="btn sm sec" onclick="fAtleta(\''+a.id+'\')">editar</button></div>'
+      +'<div class="sub">'+(a.nasc?'Nascimento: '+esc(a.nasc)+' · ':'')+(a.grupo?'Grupo: '+esc(a.grupo):'')+'</div></div>';
+  }
+  if(inat.length) h+='<div class="mini" style="margin-top:8px">Inativos: '+inat.map(a=>esc(a.nome)).join(', ')+'</div>';
+  $('#v-atletas').innerHTML=h;
+}
+window.fAtleta=function(id){
+  const a=id?atleta(id):{};
+  openDlg(id?'Editar atleta':'Novo atleta',
+    '<label>Nome completo</label><input id="fNome" value="'+esc(a.nome||'')+'">'
+    +'<div class="grid2"><div><label>Nascimento</label><input id="fNasc" type="date" value="'+esc(a.nasc||'')+'"></div>'
+    +'<div><label>Categoria</label><input id="fCat" placeholder="sub-10, sub-12..." value="'+esc(a.categoria||'')+'"></div></div>'
+    +'<div class="grid2"><div><label>Bola / etapa</label><select id="fBola">'+BOLAS.map(b=>'<option '+(a.bola===b?'selected':'')+'>'+b+'</option>').join('')+'</select></div>'
+    +'<div><label>Grupo de treino</label><input id="fGrupo" placeholder="seg/qua/sex, ter/qui, competição" value="'+esc(a.grupo||'')+'"></div></div>'
+    +'<label class="ck"><input type="checkbox" id="fAtivo" '+(a.ativo!==false?'checked':'')+'> Atleta ativo no programa</label>',
+    async()=>{ const nome=$('#fNome').value.trim(); if(!nome){dlgErr('Informe o nome.');return false}
+      return save('atletas',{nome,nasc:$('#fNasc').value,categoria:$('#fCat').value.trim(),bola:$('#fBola').value,grupo:$('#fGrupo').value.trim(),ativo:$('#fAtivo').checked},id); });
+};
+
+/* ---------- AVALIAÇÕES ---------- */
+function rAval(){
+  const list=S.avaliacoes.filter(v=>v.tri===S.tri).sort((a,b)=>nomeA(a.atletaId).localeCompare(nomeA(b.atletaId)));
+  let h='<div class="sec-head"><h2>Avaliações</h2><span class="cnt">'+triLabel(S.tri)+' · '+list.length+' lançadas</span><button class="btn add" onclick="fAval()">+ Avaliação</button></div>';
+  if(!list.length) h+='<div class="empty">Nenhuma avaliação lançada em '+triLabel(S.tri)+'. Uma por atleta, por trimestre — 5 notas e o parecer.</div>';
+  for(const v of list){
+    h+='<div class="card"><div class="row"><h3>'+esc(nomeA(v.atletaId))+'</h3>'
+      +(v.parecer==='promovivel'?'<span class="chip ok">PROMOVÍVEL</span>':v.parecer==='observar'?'<span class="chip warn">observar</span>':'<span class="chip navy">manter</span>')
+      +'<span style="margin-left:auto"></span><button class="btn sm ghost" onclick="del(this,\'avaliacoes\',\''+v.id+'\')">excluir</button></div>'
+      +'<div class="dims">'+DIM_AV.map(([k,lbl])=>'<div class="dim"><div class="num">'+(v.notas?.[k]||'—')+'</div><div class="d-lbl">'+lbl+'</div></div>').join('')+'</div>'
+      +'<div class="mini" style="margin-top:8px">'+(v.frequencia?'Frequência '+esc(v.frequencia)+'% · ':'')+'Critérios de promoção: '+(v.criterios||[]).filter(Boolean).length+'/5'+(v.autor?' · por '+esc(v.autor):'')+'</div>'
+      +(v.devolutiva?'<div class="mini" style="margin-top:4px">Devolutiva: '+esc(v.devolutiva)+'</div>':'')
+      +'</div>';
+  }
+  $('#v-avaliacoes').innerHTML=h;
+}
+window.mrevPick=function(btn){
+  const row=btn.closest('.mrev'); row.dataset.st=btn.dataset.v;
+  row.querySelectorAll('button').forEach(b=>b.className='btn sm '+(b===btn?'':'ghost'));
+};
+function metasRevHtml(aid){
+  const ms=S.metas.filter(m=>m.atletaId===aid);
+  if(!ms.length) return '<div class="mini">Sem metas de PDI lançadas para este atleta — lance na aba Metas.</div>';
+  return ms.map(m=>'<div class="mrev" data-mid="'+m.id+'" data-st="'+(m.status||'andamento')+'" style="margin:10px 0">'
+    +'<div style="font-weight:600;font-size:13px">'+esc(m.texto)+'</div>'
+    +(m.categoria||m.indicador?'<div class="mini">'+(m.categoria?esc(m.categoria):'')+(m.indicador?' · '+esc(m.indicador):'')+'</div>':'')
+    +'<div class="row" style="margin-top:5px">'+[['cumprida','✓ cumprida'],['andamento','em andamento'],['nao','não cumprida']].map(([v,l])=>'<button type="button" class="btn sm '+((m.status||'andamento')===v?'':'ghost')+'" data-v="'+v+'" onclick="mrevPick(this)">'+l+'</button>').join('')+'</div></div>').join('');
+}
+window.fAval=function(){
+  openDlg('Avaliação trimestral — '+triLabel(S.tri),
+    '<label>Atleta</label>'+selAtletas('fAtl')
+    +DIM_AV.map(([k,lbl])=>'<label>'+lbl+' (1–5)</label>'+segHtml(k)).join('')
+    +'<div class="grid2"><div><label>Frequência (%)</label><input id="fFreq" type="number" min="0" max="100" placeholder="ex.: 90"></div>'
+    +'<div><label>Avaliado por</label><input id="fAutor" placeholder="nome do professor"></div></div>'
+    +'<label>Critérios de promoção demonstrados</label>'
+    +CRITERIOS.map((c,i)=>'<label class="ck"><input type="checkbox" class="fCrit" data-i="'+i+'"> '+c+'</label>').join('')
+    +'<label>Revisão das metas do PDI</label><div id="fMetasRev"><div class="mini">Selecione o atleta para carregar as metas.</div></div>'
+    +'<label>Parecer</label><select id="fPar"><option value="manter">Manter na etapa</option><option value="observar">Observar</option><option value="promovivel">PROMOVÍVEL</option></select>'
+    +'<label>Devolutiva à família (2–3 linhas)</label><textarea id="fDev" placeholder="um ponto forte e um ponto de trabalho, em linguagem simples"></textarea>',
+    async(dlg)=>{
+      const aid=$('#fAtl').value; if(!aid){dlgErr('Selecione o atleta.');return false}
+      const notas={}; for(const [k] of DIM_AV){ notas[k]=segVal(dlg,k); }
+      if(!Object.values(notas).some(n=>n>0)){dlgErr('Lance ao menos uma nota.');return false}
+      const criterios=CRITERIOS.map((_,i)=>dlg.querySelector('.fCrit[data-i="'+i+'"]').checked);
+      const rows=[...dlg.querySelectorAll('.mrev')];
+      const okAv=await save('avaliacoes',{atletaId:aid,tri:S.tri,notas,frequencia:$('#fFreq').value,autor:$('#fAutor').value.trim(),criterios,parecer:$('#fPar').value,devolutiva:$('#fDev').value.trim(),metasRevisadas:rows.length});
+      if(!okAv) return false;
+      for(const r of rows){
+        const m=S.metas.find(x=>x.id===r.dataset.mid);
+        if(m&&m.status!==r.dataset.st){ try{ await S.db.collection('metas').doc(m.id).update({status:r.dataset.st,revisadaEm:S.tri}); }catch(e){} }
+      }
+      return true;
+    });
+  $('#fAtl').onchange=()=>{ $('#fMetasRev').innerHTML=metasRevHtml($('#fAtl').value); };
+};
+
+/* ---------- METAS ---------- */
+function rMetas(){
+  const list=S.metas.filter(m=>atleta(m.atletaId)).sort((a,b)=>nomeA(a.atletaId).localeCompare(nomeA(b.atletaId))||(a.ts-b.ts));
+  let h='<div class="sec-head"><h2>Metas (PDI)</h2><span class="cnt">'+list.length+'</span><button class="btn add" onclick="fMeta()">+ Meta</button></div>';
+  if(!list.length) h+='<div class="empty">Nenhuma meta lançada. 3 a 5 metas de processo por atleta, por semestre.</div>';
+  let cur='';
+  for(const m of list){
+    const nm=nomeA(m.atletaId);
+    if(nm!==cur){ cur=nm; h+='<div class="sub" style="margin:12px 0 6px;font-weight:600">'+esc(nm)+'</div>'; }
+    const st=m.status==='cumprida'?'<span class="chip ok">cumprida</span>':m.status==='nao'?'<span class="chip bad">não cumprida</span>':'<span class="chip warn">em andamento</span>';
+    h+='<div class="card"><div class="row"><div style="flex:1"><b>'+esc(m.texto)+'</b>'
+      +'<div class="mini">'+(m.indicador?'Indicador: '+esc(m.indicador)+' · ':'')+(m.prazo?'Prazo: '+esc(m.prazo):'')+'</div></div>'+st+'</div>'
+      +'<div class="row" style="margin-top:8px"><button class="btn sm sec" onclick="stMeta(\''+m.id+'\',\'cumprida\')">✓ cumprida</button>'
+      +'<button class="btn sm sec" onclick="stMeta(\''+m.id+'\',\'andamento\')">em andamento</button>'
+      +'<button class="btn sm sec" onclick="stMeta(\''+m.id+'\',\'nao\')">não cumprida</button>'
+      +'<button class="btn sm ghost" style="margin-left:auto" onclick="del(this,\'metas\',\''+m.id+'\')">excluir</button></div></div>';
+  }
+  $('#v-metas').innerHTML=h;
+}
+const METAS_LIB={
+  'Saque':['Aumentar o % de 1º serviço em jogos oficiais','Reduzir duplas faltas por partida','Consolidar o 2º saque com spin e profundidade','Variar a direção do saque (aberto / T / corpo)'],
+  'Devolução':['Devolver o 2º saque dentro com agressividade controlada','Aumentar o % de devoluções em quadra no 1º saque','Ajustar o posicionamento de devolução a cada sacador'],
+  'Fundo / troca de bolas':['Sustentar trocas de 8+ bolas sem erro não forçado','Aumentar a profundidade média das bolas de fundo','Usar o forehand como arma nas bolas curtas','Melhorar a recuperação de posição após defesa'],
+  'Rede':['Concluir pontos na rede após bola de aproximação','Firmar o primeiro voleio (bloqueio sólido)','Incorporar o smash como fechamento seguro'],
+  'Tática':['Construir pontos no padrão saque + forehand','Reconhecer e explorar a fraqueza do adversário','Jogar percentual nos pontos importantes (40/30, break, set point)','Alternar altura e efeito para tirar o ritmo do adversário'],
+  'Física':['Melhorar a velocidade lateral (referência: testes do preparador)','Aumentar a resistência para jogos de 3 sets','Cumprir a rotina de prevenção (ombro/core) 3x por semana'],
+  'Mental / competitivo':['Manter rotina entre pontos (respiração + ritual)','Reduzir reações negativas após erro','Manter a agressividade nos pontos de definição','Cumprir as metas de processo independentemente do placar'],
+};
+window.stMeta=async function(id,status){ if(!S.db)return; try{ await S.db.collection('metas').doc(id).update({status}); }catch(e){ toast(errMsg(e),true); } };
+window.fMeta=function(){
+  openDlg('Nova meta de processo',
+    '<label>Atleta</label>'+selAtletas('fAtl')
+    +'<label>Categoria</label><select id="fCatM"><option value="">— escolha a categoria —</option>'+Object.keys(METAS_LIB).map(c=>'<option>'+c+'</option>').join('')+'</select>'
+    +'<label>Meta sugerida</label><select id="fSug" disabled><option value="">— escolha a categoria primeiro —</option></select>'
+    +'<label>Texto da meta (ajuste se quiser)</label><textarea id="fTxt" placeholder="selecione acima ou escreva a sua"></textarea>'
+    +'<div class="grid2"><div><label>Indicador</label><input id="fInd" placeholder="como saberemos que avançou"></div>'
+    +'<div><label>Prazo</label><input id="fPrazo" type="month"></div></div>',
+    async()=>{ const aid=$('#fAtl').value, txt=$('#fTxt').value.trim();
+      if(!aid||!txt){dlgErr('Selecione o atleta e a meta (ou escreva uma).');return false}
+      return save('metas',{atletaId:aid,categoria:$('#fCatM').value,texto:txt,indicador:$('#fInd').value.trim(),prazo:$('#fPrazo').value,status:'andamento'}); });
+  $('#fCatM').onchange=()=>{ const c=$('#fCatM').value, s=$('#fSug');
+    if(!c){ s.disabled=true; s.innerHTML='<option value="">— escolha a categoria primeiro —</option>'; return; }
+    s.disabled=false;
+    s.innerHTML='<option value="">— escolha a meta —</option>'+METAS_LIB[c].map(m=>'<option>'+esc(m)+'</option>').join('')+'<option value="__outra">✍️ Outra (escrever)</option>';
+  };
+  $('#fSug').onchange=()=>{ const v=$('#fSug').value; if(v&&v!=='__outra') $('#fTxt').value=v; if(v==='__outra'){ $('#fTxt').value=''; $('#fTxt').focus(); } };
+};
+
+/* ---------- TORNEIOS (análise por atleta) ---------- */
+const TORN_QS=[
+  ['metas','As metas de processo definidas para o torneio foram cumpridas?',['Sim','Parcialmente','Não']],
+  ['tecnico','Nível técnico apresentado em relação ao treino',['Acima do treinado','Dentro do treinado','Abaixo do treinado']],
+  ['comportamento','Comportamento competitivo',['Exemplar','Adequado','Oscilou','Precisa de intervenção']],
+  ['pressao','Reação nos momentos de pressão',['Cresceu','Manteve o nível','Caiu de produção']],
+  ['fisico','O físico sustentou a demanda do torneio?',['Sim','Em parte','Não']],
+  ['adversarios','Nível dos adversários enfrentados',['Acima','Equivalente','Abaixo']],
+  ['prioridade','Prioridade de treino pós-torneio',['Saque','Devolução','Fundo / troca de bolas','Rede','Tática','Física','Mental / competitivo']],
+];
+const QPOS={'Sim':'ok','Exemplar':'ok','Adequado':'ok','Cresceu':'ok','Acima do treinado':'ok','Parcialmente':'warn','Em parte':'warn','Oscilou':'warn','Manteve o nível':'warn','Dentro do treinado':'warn','Equivalente':'warn','Não':'bad','Abaixo do treinado':'bad','Precisa de intervenção':'bad','Caiu de produção':'bad'};
+function jogosDoTorneio(aid,nomeTorn){
+  return S.jogos.filter(j=>j.atletaId===aid && (j.torneio||'').trim().toLowerCase()===String(nomeTorn||'').trim().toLowerCase() && j.finalizado!==false);
+}
+function rTorn(){
+  const list=S.torneios.slice().sort((a,b)=>(b.data||'').localeCompare(a.data||''));
+  let h='<div class="sec-head"><h2>Análise de torneio</h2><span class="cnt">'+list.length+'</span><button class="btn add" onclick="fTorn()">+ Análise</button></div>'
+    +'<div class="mini" style="margin-bottom:10px">Uma análise por atleta, por torneio — o treinador do rodízio preenche em até 48h após a saída. Os jogos lançados do torneio entram sozinhos.</div>';
+  if(!list.length) h+='<div class="empty">Nenhuma análise ainda. Lance os jogos do torneio na aba Jogos e toque em <b>+ Análise</b>.</div>';
+  for(const t of list){
+    const legado=!t.atletaId;
+    h+='<div class="card"><div class="row"><h3>'+esc(t.nome)+'</h3><span class="chip navy">'+esc(t.data||'')+'</span>'
+      +'<span style="margin-left:auto"></span><button class="btn sm ghost" onclick="del(this,\'torneios\',\''+t.id+'\')">excluir</button></div>'
+      +'<div class="sub">'+(legado?'':esc(nomeA(t.atletaId))+' · ')+esc(t.local||'')+(t.treinador?' · Treinador: '+esc(t.treinador):'')+'</div>';
+    if(legado){
+      h+=(t.atletasTxt?'<div class="mini" style="margin-top:6px"><b>Atletas e resultados:</b> '+esc(t.atletasTxt)+'</div>':'')
+        +(t.aprendizados?'<div class="mini" style="margin-top:4px"><b>Aprendizados:</b> '+esc(t.aprendizados)+'</div>':'');
+    } else {
+      const r=t.respostas||{};
+      h+='<div class="row" style="margin-top:8px">'+TORN_QS.filter(([k])=>r[k]).slice(0,4).map(([k,q,ops])=>'<span class="chip '+(QPOS[r[k]]||'navy')+'" title="'+esc(q)+'">'+esc(r[k])+'</span>').join('')+'</div>';
+      if(r.prioridade) h+='<div class="mini" style="margin-top:5px">Prioridade pós-torneio: <b>'+esc(r.prioridade)+'</b></div>';
+      const jg=jogosDoTorneio(t.atletaId,t.nome);
+      if(jg.length) h+='<div class="mini" style="margin-top:5px">Jogos: '+jg.map(j=>esc(j.adversario||'?')+' '+esc(j.placar||'')+' ('+(j.resultado||'')+')').join(' · ')+'</div>';
+      if(t.obs) h+='<div class="mini" style="margin-top:5px"><b>Anotações do treinador:</b> '+esc(t.obs)+'</div>';
+    }
+    h+='</div>';
+  }
+  $('#v-torneios').innerHTML=h;
+}
+window.fTorn=function(){
+  openDlg('Análise de torneio',
+    '<label>Atleta</label>'+selAtletas('fAtl')
+    +'<label>Torneio</label><select id="fTornSel" disabled><option value="">— selecione o atleta primeiro —</option></select>'
+    +'<div id="fTornOutroBox" hidden><label>Nome do torneio</label><input id="fTornOutro" placeholder="ex.: FPT 3ª classe — Etapa Campinas"></div>'
+    +'<div class="grid2"><div><label>Data</label><input id="fData" type="date"></div>'
+    +'<div><label>Treinador (rodízio)</label><input id="fTre" placeholder="Yuki, Sergio ou João G."></div></div>'
+    +'<label>Local / clube-sede</label><input id="fLocal">'
+    +'<div id="fJgPrev"></div>'
+    +TORN_QS.map(([k,q,ops])=>'<label>'+q+'</label><select id="fq_'+k+'"><option value="">— selecione —</option>'+ops.map(o=>'<option>'+o+'</option>').join('')+'</select>').join('')
+    +'<label>Anotações do treinador (saem no relatório)</label><textarea id="fObs" placeholder="leitura do torneio, aprendizados para o treino, observações do circuito, sondagens"></textarea>',
+    async()=>{
+      const aid=$('#fAtl').value; if(!aid){dlgErr('Selecione o atleta.');return false}
+      let nome=$('#fTornSel').value==='__outro' ? $('#fTornOutro').value.trim() : $('#fTornSel').value;
+      if(!nome){dlgErr('Selecione ou informe o torneio.');return false}
+      const respostas={}; let faltam=0;
+      for(const [k] of TORN_QS){ const v=$('#fq_'+k).value; if(v)respostas[k]=v; else faltam++; }
+      if(faltam===TORN_QS.length){dlgErr('Responda as perguntas da análise.');return false}
+      return save('torneios',{atletaId:aid,nome,data:$('#fData').value,treinador:$('#fTre').value.trim(),local:$('#fLocal').value.trim(),respostas,obs:$('#fObs').value.trim()});
+    });
+  const upd=()=>{
+    const aid=$('#fAtl').value, sel=$('#fTornSel');
+    if(!aid){ sel.disabled=true; sel.innerHTML='<option value="">— selecione o atleta primeiro —</option>'; $('#fJgPrev').innerHTML=''; return; }
+    const nomes=[...new Set(S.jogos.filter(j=>j.atletaId===aid&&(j.torneio||'').trim()).map(j=>j.torneio.trim()))];
+    sel.disabled=false;
+    sel.innerHTML='<option value="">— torneios com jogos lançados —</option>'+nomes.map(n=>'<option>'+esc(n)+'</option>').join('')+'<option value="__outro">✍️ Outro torneio</option>';
+    $('#fJgPrev').innerHTML='';
+  };
+  $('#fAtl').onchange=upd;
+  $('#fTornSel').onchange=()=>{
+    const v=$('#fTornSel').value;
+    $('#fTornOutroBox').hidden = v!=='__outro';
+    if(v&&v!=='__outro'){
+      const jg=jogosDoTorneio($('#fAtl').value,v);
+      if(jg.length){
+        const dts=jg.map(j=>j.data).filter(Boolean).sort();
+        if(dts.length) $('#fData').value=dts[dts.length-1];
+        $('#fJgPrev').innerHTML='<div class="mini" style="margin:8px 0">Jogos deste torneio (entram na análise): '+jg.map(j=>esc(j.adversario||'?')+' '+esc(j.placar||'')+' ('+(j.resultado||'')+')').join(' · ')+'</div>';
+      } else $('#fJgPrev').innerHTML='';
+    } else $('#fJgPrev').innerHTML='';
+  };
+};
+
+/* ---------- MOTOR DE PONTUAÇÃO ---------- */
+function computeMatch(cfg,log){
+  const gps=cfg.games||6, bo=cfg.sets||3, need=bo===1?1:2;
+  const sets=[]; let gA=0,gO=0,pA=0,pO=0,tb=false,mtb=false,setsA=0,setsO=0,over=false,winner=null,srv=cfg.srv||'A';
+  const flip=()=>{srv=srv==='A'?'O':'A'};
+  for(const pt of log){
+    if(over) break;
+    const w=pt.w;
+    if(mtb){
+      if(w==='A')pA++;else pO++;
+      if((pA+pO)%2===1) flip();
+      if((pA>=10||pO>=10)&&Math.abs(pA-pO)>=2){
+        sets.push({gA:pA>pO?1:0,gO:pA>pO?0:1,tbA:pA,tbO:pO,mtb:true});
+        if(pA>pO)setsA++;else setsO++;
+        pA=0;pO=0;
+      }
+    } else if(tb){
+      if(w==='A')pA++;else pO++;
+      if((pA+pO)%2===1) flip();
+      if((pA>=7||pO>=7)&&Math.abs(pA-pO)>=2){
+        if(pA>pO)gA++;else gO++;
+        sets.push({gA,gO,tbA:pA,tbO:pO});
+        if(pA>pO)setsA++;else setsO++;
+        gA=0;gO=0;pA=0;pO=0;tb=false;
+      }
+    } else {
+      if(w==='A')pA++;else pO++;
+      let gw=null;
+      if(cfg.noAd){ if(pA>=4&&pA>pO)gw='A'; else if(pO>=4&&pO>pA)gw='O'; }
+      else { if(pA>=4&&pA-pO>=2)gw='A'; else if(pO>=4&&pO-pA>=2)gw='O'; }
+      if(gw){
+        if(gw==='A')gA++;else gO++;
+        pA=0;pO=0; flip();
+        if(gA===gps&&gO===gps){ tb=true; }
+        else if((gA>=gps||gO>=gps)&&Math.abs(gA-gO)>=2){
+          sets.push({gA,gO}); if(gA>gO)setsA++;else setsO++; gA=0;gO=0;
+        }
+      }
+    }
+    if(setsA===need||setsO===need){ over=true; winner=setsA>setsO?'A':'O'; }
+    else if(bo===3&&setsA===1&&setsO===1&&cfg.mtb&&gA===0&&gO===0&&!tb&&!mtb){ mtb=true; pA=0;pO=0; }
+  }
+  return {sets,gA,gO,pA,pO,tb,mtb,over,winner,setsA,setsO,srv};
+}
+function ptsDisplay(st){
+  if(st.tb||st.mtb) return [String(st.pA),String(st.pO)];
+  const P=['0','15','30','40'];
+  if(st.pA>=3&&st.pO>=3){ if(st.pA===st.pO) return ['40','40']; return st.pA>st.pO?['AD','–']:['–','AD']; }
+  return [P[Math.min(st.pA,3)],P[Math.min(st.pO,3)]];
+}
+function placarStr(st){
+  const parts=st.sets.map(s=> s.mtb ? '['+s.tbA+'-'+s.tbO+']' : s.gA+'/'+s.gO+(s.tbA!=null?'('+Math.min(s.tbA,s.tbO)+')':''));
+  if(!st.over&&(st.gA||st.gO||st.pA||st.pO)) parts.push(st.gA+'/'+st.gO+(st.tb?' tb':st.mtb?' mtb':''));
+  return parts.join(' ');
+}
+/* tag = como o VENCEDOR do ponto ganhou: ace, win (winner), ef (erro forçado do perdedor),
+   enf (erro não forçado do perdedor), df (dupla falta do perdedor).
+   Estatísticas sempre na perspectiva do ATLETA. */
+function statsFromLog(log){
+  const n=(w,t)=>log.filter(p=>p.w===w&&p.tag===t).length;
+  return { aces:n('A','ace'), win:n('A','win'),           // pontos ganhos pelo atleta
+           df:n('O','df'), enf:n('O','enf'), ef:n('O','ef'), // erros do próprio atleta
+           acesAdv:n('O','ace'), winAdv:n('O','win') };
+}
+
+/* ---------- ANÁLISE DA PARTIDA (relatório) ---------- */
+function analyzeMatch(cfg,log){
+  const gps=cfg.games||6, bo=cfg.sets||3, need=bo===1?1:2;
+  const setPts=[[]], games=[], setScores=[];
+  let set=0,gA=0,gO=0,pA=0,pO=0,tb=false,mtb=false,setsA=0,setsO=0,over=false,winner=null,srv=cfg.srv||'A';
+  const flip=()=>{srv=srv==='A'?'O':'A'};
+  const disp=(a,b,phase)=>{ if(phase!=='game') return [String(a),String(b)];
+    const P=['0','15','30','40'];
+    if(a>=3&&b>=3){ if(a===b)return['40','40']; return a>b?['AD','–']:['–','AD']; }
+    return [P[Math.min(a,3)],P[Math.min(b,3)]]; };
+  for(const raw of log){
+    if(over) break;
+    const w=raw.w, tag=raw.tag||null;
+    const phase = mtb?'mtb':tb?'tb':'game';
+    let gpA=false,gpO=false,deuce=false;
+    if(phase==='game'){
+      deuce = pA===pO && pA>=3;
+      gpA = pA>=3 && (cfg.noAd ? pA>=pO : pA-pO>=1);
+      gpO = pO>=3 && (cfg.noAd ? pO>=pA : pO-pA>=1);
+    } else {
+      const target = phase==='tb'?7:10;
+      gpA = pA>=target-1 && pA-pO>=1; gpO = pO>=target-1 && pO-pA>=1;
+    }
+    let spA,spO;
+    if(phase==='game'){ spA = gpA && (gA+1>=gps && gA+1-gO>=2); spO = gpO && (gO+1>=gps && gO+1-gA>=2); }
+    else { spA=gpA; spO=gpO; }
+    const bpA = phase==='game' && gpA && srv==='O';
+    const bpO = phase==='game' && gpO && srv==='A';
+    const gameSrv=srv, gameIdx=games.filter(g=>g.set===set).length;
+    const rec={set,game:gameIdx,w,tag,srv:gameSrv,phase,gpA,gpO,bpA,bpO,spA,spO,deuce,dA:'',dO:'',closes:null};
+    // aplica o ponto (mesmas regras do computeMatch)
+    if(phase==='mtb'){
+      if(w==='A')pA++;else pO++;
+      if((pA+pO)%2===1) flip();
+      rec.dA=String(pA); rec.dO=String(pO);
+      if((pA>=10||pO>=10)&&Math.abs(pA-pO)>=2){
+        rec.closes='set';
+        setPts[set].push(rec);
+        setScores.push({gA:pA>pO?1:0,gO:pA>pO?0:1,tbA:pA,tbO:pO,mtb:true});
+        if(pA>pO)setsA++;else setsO++;
+        pA=0;pO=0; set++; setPts.push([]);
+      } else setPts[set].push(rec);
+    } else if(phase==='tb'){
+      if(w==='A')pA++;else pO++;
+      if((pA+pO)%2===1) flip();
+      rec.dA=String(pA); rec.dO=String(pO);
+      if((pA>=7||pO>=7)&&Math.abs(pA-pO)>=2){
+        rec.closes='set';
+        if(pA>pO)gA++;else gO++;
+        setPts[set].push(rec);
+        games.push({set,srv:gameSrv,winner:pA>pO?'A':'O',isBreak:false,tbGame:true,endIdx:setPts[set].length});
+        setScores.push({gA,gO,tbA:pA,tbO:pO});
+        if(pA>pO)setsA++;else setsO++;
+        gA=0;gO=0;pA=0;pO=0;tb=false; set++; setPts.push([]);
+      } else setPts[set].push(rec);
+    } else {
+      if(w==='A')pA++;else pO++;
+      let gw=null;
+      if(cfg.noAd){ if(pA>=4&&pA>pO)gw='A'; else if(pO>=4&&pO>pA)gw='O'; }
+      else { if(pA>=4&&pA-pO>=2)gw='A'; else if(pO>=4&&pO-pA>=2)gw='O'; }
+      if(gw){
+        rec.closes='game';
+        rec.dA = gw==='A'?'G':disp(pA,pO,'game')[0]; rec.dO = gw==='O'?'G':disp(pA,pO,'game')[1];
+        if(gw==='A')gA++;else gO++;
+        pA=0;pO=0;
+        setPts[set].push(rec);
+        games.push({set,srv:gameSrv,winner:gw,isBreak:gw!==gameSrv,endIdx:setPts[set].length});
+        flip();
+        if(gA===gps&&gO===gps){ tb=true; }
+        else if((gA>=gps||gO>=gps)&&Math.abs(gA-gO)>=2){
+          rec.closes='set';
+          setScores.push({gA,gO});
+          if(gA>gO)setsA++;else setsO++;
+          gA=0;gO=0; set++; setPts.push([]);
+        }
+      } else {
+        const d=disp(pA,pO,'game'); rec.dA=d[0]; rec.dO=d[1];
+        setPts[set].push(rec);
+      }
+    }
+    if(setsA===need||setsO===need){ over=true; winner=setsA>setsO?'A':'O'; }
+    else if(bo===3&&setsA===1&&setsO===1&&cfg.mtb&&gA===0&&gO===0&&!tb&&!mtb){ mtb=true; }
+  }
+  if(setPts.length && !setPts[setPts.length-1].length && setPts.length>1) setPts.pop();
+  return {setPts,games,setScores,over,winner};
+}
+function pctBar(lbl,aWon,aTot,oWon,oTot,nomeA_,nomeO_){
+  const pa=aTot?Math.round(100*aWon/aTot):null, po=oTot?Math.round(100*oWon/oTot):null;
+  const w=v=>v==null?0:Math.max(2,v*0.9);
+  return '<div class="lev-row"><div class="l-lbl">'+lbl+'</div><div class="lev-bars">'
+    +'<div title="'+nomeA_+': '+aWon+' de '+aTot+'"><i style="width:'+w(pa)+'%;background:var(--sA)"></i>'+(pa==null?'—':pa+'% ('+aWon+'/'+aTot+')')+'</div>'
+    +'<div title="'+nomeO_+': '+oWon+' de '+oTot+'"><i style="width:'+w(po)+'%;background:var(--sO)"></i>'+(po==null?'—':po+'% ('+oWon+'/'+oTot+')')+'</div>'
+    +'</div></div>';
+}
+function cmpRow(lbl,a,o,invert){
+  const tot=a+o, wa=tot?100*a/tot:0;
+  const boldA = invert ? a<o : a>o, boldO = invert ? o<a : o>a;
+  const bar = tot
+    ? '<div class="c-bar">'+(a?'<i class="bA" style="width:'+wa+'%"></i>':'')+(a&&o?'<i class="gap"></i>':'')+(o?'<i class="bO" style="width:'+(100-wa)+'%"></i>':'')+'</div>'
+    : '<div class="c-bar"></div>';
+  return '<div class="cmp"><div class="c-lbl">'+lbl+'</div><div class="c-row">'
+    +'<div class="c-val" style="'+(boldA?'color:var(--sA)':'color:var(--muted)')+'">'+a+'</div>'
+    +bar
+    +'<div class="c-val r" style="'+(boldO?'color:var(--sO)':'color:var(--muted)')+'">'+o+'</div></div></div>';
+}
+window.repOpen=function(id){ S.repId=id; S.repSet=0; render(); };
+window.repClose=function(){ S.repId=null; render(); };
+window.repSet=function(i){ S.repSet=i; render(); };
+function rReport(){
+  if(S.repSet==null) S.repSet=0;
+  const j=S.jogos.find(x=>x.id===S.repId);
+  if(!j||!(j.log||[]).length){ S.repId=null; rJogos(); return; }
+  const an=analyzeMatch(j.cfg||{},j.log||[]);
+  const nome=nomeA(j.atletaId), adv=j.adversario||'Adversário';
+  const n1=esc(nome.split(' ')[0]), n2=esc(adv.split(' ')[0]);
+  const all=an.setPts.flat();
+  const TAGS=[['win','Winner','--tgW'],['ace','Ace','--tgA'],['df','Dupla falta','--tgD'],['enf','Erro não forçado','--tgU'],['ef','Erro forçado','--tgF']];
+  const tagVar=t=>{const x=TAGS.find(z=>z[0]===t);return x?x[2]:null};
+  const cnt=(w,t)=>all.filter(p=>p.w===w&&p.tag===t).length;
+
+  let h='<div class="sec-head"><button class="btn sm ghost" onclick="repClose()">‹ jogos</button><h2 style="font-size:16px">Relatório da partida</h2></div>';
+  h+='<div class="card"><div class="row"><h3>'+esc(nome)+' × '+esc(adv)+'</h3>'
+    +(j.resultado==='V'?'<span class="chip ok">V</span>':j.resultado==='D'?'<span class="chip bad">D</span>':'<span class="chip warn">'+(j.finalizado===false?'em andamento':'interrompida')+'</span>')
+    +'</div><div class="sub">'+esc(j.placar||placarStr(computeMatch(j.cfg||{},j.log||[])))+(j.torneio?' · '+esc(j.torneio):'')+(j.data?' · '+esc(j.data):'')+'</div>'
+    +((j.tipoTorneio||j.quadra)?'<div class="row" style="margin-top:6px">'+(j.tipoTorneio?'<span class="chip navy">'+esc(j.tipoTorneio)+'</span>':'')+(j.quadra?'<span class="chip clay">'+esc(j.quadra)+'</span>':'')+'</div>':'')+'</div>';
+
+  /* resumo comparativo */
+  h+='<div class="card"><h3>Resumo</h3><div class="rep-legend"><span><i style="background:var(--sA)"></i>'+n1+'</span><span><i style="background:var(--sO)"></i>'+n2+'</span></div>'
+    +cmpRow('Pontos ganhos',all.filter(p=>p.w==='A').length,all.filter(p=>p.w==='O').length)
+    +cmpRow('Winners',cnt('A','win'),cnt('O','win'))
+    +cmpRow('Aces',cnt('A','ace'),cnt('O','ace'))
+    +cmpRow('Erros não forçados',cnt('O','enf'),cnt('A','enf'),true)
+    +cmpRow('Erros forçados',cnt('O','ef'),cnt('A','ef'),true)
+    +cmpRow('Duplas faltas',cnt('O','df'),cnt('A','df'),true)
+    +'</div>';
+
+  /* pressão: deuce, game, break e set points */
+  const lev=(fA,fO)=>{ const ha=all.filter(fA), ho=all.filter(fO);
+    return [ha.filter(p=>p.w==='A').length,ha.length,ho.filter(p=>p.w==='O').length,ho.length]; };
+  const [dA,dTA,dO2,dTO]=lev(p=>p.deuce,p=>p.deuce);
+  const [gA2,gTA,gO2,gTO]=lev(p=>p.gpA,p=>p.gpO);
+  const [bA,bTA,bO,bTO]=lev(p=>p.bpA,p=>p.bpO);
+  const [sA2,sTA,sO2,sTO]=lev(p=>p.spA,p=>p.spO);
+  h+='<div class="card"><h3>Desempenho sob pressão</h3><div class="mini" style="margin-bottom:6px">% dos pontos de pressão convertidos por cada lado.</div>'
+    +pctBar('Deuce',dA,dTA,dO2,dTO,n1,n2)
+    +pctBar('Game points',gA2,gTA,gO2,gTO,n1,n2)
+    +pctBar('Break points',bA,bTA,bO,bTO,n1,n2)
+    +pctBar('Set points',sA2,sTA,sO2,sTO,n1,n2)
+    +'</div>';
+
+  /* seletor de set */
+  const nSets=an.setPts.length;
+  h+='<div class="setsel">'+an.setPts.map((_,i)=>'<button class="'+(S.repSet===i?'on':'')+'" onclick="repSet('+i+')">Set '+(i+1)+'</button>').join('')+'</div>';
+  const sp=an.setPts[Math.min(S.repSet,nSets-1)]||[];
+  const sgames=an.games.filter(g=>g.set===Math.min(S.repSet,nSets-1));
+
+  /* momentum ponto a ponto */
+  h+='<div class="card"><h3>Ponto a ponto</h3>'
+    +'<div class="rep-legend">'+TAGS.map(([t,lbl,v])=>'<span><i style="background:var('+v+')"></i>'+lbl+'</span>').join('')+'<span>◉ ponto de pressão</span></div>'
+    +'<div class="mom">';
+  const byGame={};
+  sp.forEach(p=>{ (byGame[p.game]=byGame[p.game]||[]).push(p); });
+  for(const gi of Object.keys(byGame)){
+    const gpts=byGame[gi];
+    const srvNome = gpts[0].srv==='A'?n1:n2;
+    const isTb = gpts[0].phase!=='game';
+    h+='<div class="mom-g"><div class="g-h">'+(isTb?(gpts[0].phase==='mtb'?'Match TB':'Tiebreak'):'Game '+(+gi+1))+' · '+srvNome+' saca</div>';
+    for(const lane of ['A','O']){
+      h+='<div class="mom-row">'+gpts.map(p=>{
+        const won=p.w===lane, press=(p.bpA||p.bpO||p.spA||p.spO);
+        const tv=won&&p.tag?tagVar(p.tag):null;
+        const val=lane==='A'?p.dA:p.dO;
+        const tipo=p.tag?TAGS.find(z=>z[0]===p.tag)[1]:'';
+        return '<div class="mom-pt'+(won?' won':'')+(press&&lane==='A'?' press':'')+'" '
+          +(tv?'style="border-bottom-color:var('+tv+')"':'')
+          +' title="'+(p.w==='A'?n1:n2)+(tipo?' — '+tipo:'')+(p.bpA||p.bpO?' · break point':p.spA||p.spO?' · set point':'')+'">'+val+'</div>';
+      }).join('')+'</div>';
+    }
+    h+='</div>';
+  }
+  h+='</div><div class="mini">'+n1+' na linha de cima, '+n2+' embaixo. Deslize para o lado para ver todos os games.</div></div>';
+
+  /* score worm */
+  const W=640,H=170,mid=H/2-8;
+  let diffs=[],d0=0;
+  sp.forEach(p=>{ d0+=p.w==='A'?1:-1; diffs.push(d0); });
+  const maxAbs=Math.max(3,...diffs.map(Math.abs));
+  const sx=i=>10+(W-30)*(diffs.length>1?i/(diffs.length-1):0);
+  const sy=v=>mid-(v/maxAbs)*(mid-22);
+  if(diffs.length){
+    let path='M'+sx(0)+' '+sy(diffs[0]);
+    for(let i=1;i<diffs.length;i++){ path+=' L'+sx(i)+' '+sy(diffs[i-1])+' L'+sx(i)+' '+sy(diffs[i]); }
+    let marks='';
+    sgames.filter(g=>g.isBreak).forEach(g=>{ const x=sx(g.endIdx-1);
+      marks+='<line x1="'+x+'" y1="16" x2="'+x+'" y2="'+(H-24)+'" stroke="var(--tgD)" stroke-dasharray="3 3" stroke-width="1"/>'
+        +'<circle cx="'+x+'" cy="'+(H-18)+'" r="4" fill="var(--tgD)"><title>Quebra de saque — game '+(sgames.indexOf(g)+1)+'</title></circle>'; });
+    h+='<div class="card"><h3>Score worm</h3><div class="mini" style="margin-bottom:4px">Saldo de pontos de '+n1+' ao longo do set. <span style="color:var(--tgD)">— quebra de saque</span></div>'
+      +'<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto" role="img" aria-label="Saldo de pontos ao longo do set">'
+      +'<line x1="10" y1="'+mid+'" x2="'+(W-20)+'" y2="'+mid+'" stroke="var(--line)" stroke-dasharray="4 4"/>'
+      +'<text x="12" y="14" font-size="11" fill="var(--sA)" font-weight="600">'+n1+'</text>'
+      +'<text x="12" y="'+(H-6)+'" font-size="11" fill="var(--muted)">'+n2+'</text>'
+      +'<text x="'+(W-16)+'" y="'+(sy(maxAbs)+4)+'" font-size="10" fill="var(--muted)" text-anchor="end">+'+maxAbs+'</text>'
+      +'<text x="'+(W-16)+'" y="'+(sy(-maxAbs)+4)+'" font-size="10" fill="var(--muted)" text-anchor="end">−'+maxAbs+'</text>'
+      +marks
+      +'<path d="'+path+'" fill="none" stroke="var(--sA)" stroke-width="2" stroke-linejoin="round"/>'
+      +'</svg></div>';
+  }
+
+  /* pressão tática (média móvel de 10 pontos) */
+  if(sp.length>3){
+    const win=10; let mov=[];
+    sp.forEach((p,i)=>{ const from=Math.max(0,i-win+1); let s=0;
+      for(let k=from;k<=i;k++) s+=sp[k].w==='A'?1:-1;
+      mov.push(s/(i-from+1)); });
+    const py=v=>mid-v*(mid-22);
+    let area='M'+sx(0)+' '+mid;
+    mov.forEach((v,i)=>{ area+=' L'+sx(i)+' '+py(v); });
+    area+=' L'+sx(mov.length-1)+' '+mid+' Z';
+    h+='<div class="card"><h3>Pressão tática</h3><div class="mini" style="margin-bottom:4px">Média móvel de 10 pontos — acima da linha, momento com '+n1+'; abaixo, com '+n2+'.</div>'
+      +'<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto" role="img" aria-label="Momento da partida">'
+      +'<defs><clipPath id="cUp"><rect x="0" y="0" width="'+W+'" height="'+mid+'"/></clipPath>'
+      +'<clipPath id="cDn"><rect x="0" y="'+mid+'" width="'+W+'" height="'+(H-mid)+'"/></clipPath></defs>'
+      +'<line x1="10" y1="'+mid+'" x2="'+(W-20)+'" y2="'+mid+'" stroke="var(--line)"/>'
+      +'<path d="'+area+'" fill="var(--sA)" opacity="0.35" clip-path="url(#cUp)"/>'
+      +'<path d="'+area+'" fill="var(--muted)" opacity="0.3" clip-path="url(#cDn)"/>'
+      +'<path d="'+area.replace(/ L[\d.]+ [\d.]+ Z$/,'')+'" fill="none" stroke="var(--ink)" stroke-width="1.4" opacity="0.7"/>'
+      +'<text x="12" y="14" font-size="11" fill="var(--sA)" font-weight="600">'+n1+'</text>'
+      +'<text x="12" y="'+(H-6)+'" font-size="11" fill="var(--muted)">'+n2+'</text>'
+      +'</svg></div>';
+  }
+  $('#v-jogos').innerHTML=h;
+}
+
+/* ---------- JOGOS ---------- */
+function rJogos(){
+  if(S.repId){ rReport(); return; }
+  if(S.liveId){ rLive(); return; }
+  const andamento=S.jogos.filter(j=>j.finalizado===false).sort((a,b)=>b.ts-a.ts);
+  const list=S.jogos.filter(j=>j.finalizado!==false).sort((a,b)=>(b.data||'').localeCompare(a.data||''));
+  let h='<div class="sec-head"><h2>Jogos</h2><span class="cnt">'+list.length+'</span>'
+   +'<span style="margin-left:auto"></span>'+(S.role==='coach'?'<button class="btn sm ghost" onclick="fImport()">⇪ importar</button>':'')+'<button class="btn sec" onclick="fJogo()">+ Resultado</button><button class="btn" onclick="fJogoLive()">▶ Ao vivo</button></div>'
+   +'<div class="mini" style="margin-bottom:10px"><b>▶ Ao vivo</b>: marque ponto a ponto da arquibancada — o placar calcula sozinho e o técnico acompanha em tempo real. <b>+ Resultado</b>: registro rápido de jogo já encerrado.</div>';
+  for(const j of andamento){
+    const st=computeMatch(j.cfg||{},j.log||[]);
+    h+='<div class="card" style="border-color:var(--clay)"><div class="row"><h3>'+esc(nomeA(j.atletaId))+' × '+esc(j.adversario||'?')+'</h3><span class="chip clay">EM ANDAMENTO</span>'
+      +'<span style="margin-left:auto"></span><button class="btn sm" onclick="S.liveId=\''+j.id+'\';render()">continuar ▶</button></div>'
+      +'<div class="sub">'+esc(placarStr(st)||'0/0')+(j.torneio?' · '+esc(j.torneio):'')+'</div></div>';
+  }
+  if(!list.length&&!andamento.length) h+='<div class="empty">Nenhum jogo ainda. Toque em <b>▶ Ao vivo</b> na hora da partida.</div>';
+  if(list.length){
+    h+='<div class="card scroll"><table class="tbl"><tr><th>Data</th><th>Atleta</th><th>Adversário</th><th>Placar</th><th>R</th><th>Tipo</th><th>Piso</th><th>1ºsv%</th><th>Aces</th><th>DF</th><th>Win</th><th>ENF</th><th></th></tr>';
+    for(const j of list){
+      h+='<tr><td>'+esc((j.data||'').slice(5))+'</td><td>'+esc(nomeA(j.atletaId))+'</td><td>'+esc(j.adversario||'')+(j.clubeAdv?' <span class="mini">('+esc(j.clubeAdv)+')</span>':'')+'</td>'
+        +'<td>'+esc(j.placar||'')+'</td><td>'+(j.resultado==='V'?'<span class="chip ok">V</span>':j.resultado==='D'?'<span class="chip bad">D</span>':'<span class="chip warn">INT</span>')+'</td>'
+        +'<td>'+esc(j.tipoTorneio||'')+'</td><td>'+esc(j.quadra||'')+'</td>'
+        +'<td>'+esc(j.stats?.psv??'')+'</td><td>'+esc(j.stats?.aces??'')+'</td><td>'+esc(j.stats?.df??'')+'</td><td>'+esc(j.stats?.win??'')+'</td><td>'+esc(j.stats?.enf??'')+'</td>'
+        +'<td style="white-space:nowrap">'+((j.log||[]).length?'<button class="btn sm sec" onclick="repOpen(\''+j.id+'\')">📊</button> ':'')+'<button class="btn sm ghost" onclick="del(this,\'jogos\',\''+j.id+'\')">×</button></td></tr>';
+    }
+    h+='</table></div>';
+  }
+  $('#v-jogos').innerHTML=h;
+}
+window.fJogo=function(){
+  openDlg('Anotar jogo',
+    '<label>Atleta</label>'+selAtletas('fAtl')
+    +'<div class="grid2"><div><label>Data</label><input id="fData" type="date" value="'+new Date().toISOString().slice(0,10)+'"></div>'
+    +'<div><label>Torneio</label><input id="fTorneio" placeholder="opcional"></div></div>'
+    +'<div class="grid2"><div><label>Tipo do torneio</label><select id="fTipoT">'+selOpts(TIPOS_TORNEIO)+'</select></div><div><label>Tipo de quadra</label><select id="fQuadra">'+selOpts(QUADRAS,'Saibro')+'</select></div></div>'
+    +'<div class="grid2"><div><label>Adversário</label><input id="fAdv"></div><div><label>Clube do adversário</label><input id="fClube" placeholder="opcional"></div></div>'
+    +'<div class="grid2"><div><label>Placar</label><input id="fPlacar" placeholder="6/3 4/6 [10-7]"></div>'
+    +'<div><label>Resultado</label><select id="fRes"><option value="V">Vitória</option><option value="D">Derrota</option></select></div></div>'
+    +'<div class="grid2"><div><label>1º serviço dentro (%)</label><input id="fPsv" type="number" min="0" max="100"></div><div><label>Aces</label><input id="fAces" type="number" min="0"></div></div>'
+    +'<div class="grid2"><div><label>Duplas faltas</label><input id="fDf" type="number" min="0"></div><div><label>Winners</label><input id="fWin" type="number" min="0"></div></div>'
+    +'<div class="grid2"><div><label>Erros não forçados</label><input id="fEnf" type="number" min="0"></div><div><label>Anotado por</label><input id="fAnot" placeholder="seu nome"></div></div>',
+    async()=>{ const aid=$('#fAtl').value; if(!aid){dlgErr('Selecione o atleta.');return false}
+      const num=id=>{const v=$(id).value;return v===''?null:+v};
+      return save('jogos',{atletaId:aid,data:$('#fData').value,torneio:$('#fTorneio').value.trim(),tipoTorneio:$('#fTipoT').value,quadra:$('#fQuadra').value,adversario:$('#fAdv').value.trim(),clubeAdv:$('#fClube').value.trim(),placar:$('#fPlacar').value.trim(),resultado:$('#fRes').value,stats:{psv:num('#fPsv'),aces:num('#fAces'),df:num('#fDf'),win:num('#fWin'),enf:num('#fEnf')},anotador:$('#fAnot').value.trim()});
+    });
+};
+
+/* ---------- RELATÓRIOS AUTOMÁTICOS ---------- */
+window.relOpenProg=function(){ S.relView='prog'; render(); };
+window.relOpenAtleta=function(sel){ if(!sel.value)return; S.relAtleta=sel.value; S.relView='atleta'; render(); };
+window.relBack=function(){ S.relView=null; S.relAtleta=null; render(); };
+window.relPrint=function(){ try{ window.print(); }catch(e){ toast('Use o menu do navegador para imprimir/salvar em PDF.',true); } };
+window.relSaveProg=async function(){
+  if(!S.db) return;
+  const body={tri:S.tri,destaques:$('#rDest').value.trim(),pendencias:$('#rPend').value.trim(),decisoes:$('#rDec').value.trim(),ts:Date.now()};
+  try{ await S.db.collection('relatorios').doc(S.tri).set(body); toast('Relatório salvo ✓'); }catch(e){ toast(errMsg(e),true); }
+};
+function rRel(){
+  if(S.role==='athlete'){ $('#v-relatorios').innerHTML='<div class="empty">Área dos treinadores. Seus relatórios de partida estão na aba Jogos (📊).</div>'; return; }
+  if(S.relView==='prog'){ rRelProg(); return; }
+  if(S.relView==='atleta'&&S.relAtleta){ rRelAtleta(); return; }
+  let h='<div class="sec-head"><h2>Relatórios</h2><span class="cnt">gerados dos lançamentos</span></div>';
+  h+='<div class="card"><h3>Relatório Trimestral do Programa</h3><div class="sub">KPIs, torneios acompanhados, promovíveis e pendências de '+triLabel(S.tri)+' — preenchido automaticamente; destaques e decisões editáveis. É o documento do comitê.</div>'
+    +'<div class="row" style="margin-top:10px"><button class="btn" onclick="relOpenProg()">Abrir '+triLabel(S.tri)+'</button></div></div>';
+  h+='<div class="card"><h3>Relatório do Atleta</h3><div class="sub">Avaliação do trimestre, evolução vs trimestre anterior, metas do PDI e jogos — pronto para a conversa com atleta e família.</div>'
+    +'<div style="margin-top:10px"><select onchange="relOpenAtleta(this)"><option value="">— escolha o atleta —</option>'+ativos().map(a=>'<option value="'+a.id+'">'+esc(a.nome)+'</option>').join('')+'</select></div></div>';
+  h+='<div class="mini">Relatórios de partida (ponto a ponto) ficam na aba Jogos, no botão 📊 de cada jogo.</div>';
+  $('#v-relatorios').innerHTML=h;
+}
+function rRelProg(){
+  const tri=S.tri, at=ativos();
+  const avTri=at.map(a=>avalDoTri(a.id,tri)).filter(Boolean);
+  const metasAb=S.metas.filter(m=>atleta(m.atletaId));
+  const metasC=metasAb.filter(m=>m.status==='cumprida');
+  const jg=jogosDoTri(tri), tn=tornDoTri(tri);
+  const V=jg.filter(j=>j.resultado==='V').length, D=jg.filter(j=>j.resultado==='D').length;
+  const promo=avTri.filter(v=>v.parecer==='promovivel').map(v=>nomeA(v.atletaId));
+  const pend=at.filter(a=>!avalDoTri(a.id,tri)).map(a=>a.nome);
+  const saved=S.relatorios.find(r=>r.id===tri)||{};
+  const pct=(n,d)=>d?Math.round(100*n/d)+'%':'—';
+  let h='<div class="sec-head no-print"><button class="btn sm ghost" onclick="relBack()">‹ relatórios</button><span style="flex:1"></span><button class="btn sm sec" onclick="relPrint()">🖨 imprimir / PDF</button></div>';
+  h+='<div class="card"><h3>Relatório Trimestral do Programa — '+triLabel(tri)+'</h3><div class="sub">Tênis Clube de Campinas · Programa de Tênis de Competição · gerado automaticamente dos lançamentos</div></div>';
+  h+='<div class="card"><h3>1. KPIs do trimestre</h3><div class="scroll"><table class="tbl">'
+    +'<tr><th>Indicador</th><th>Realizado</th></tr>'
+    +'<tr><td>Atletas ativos no programa</td><td>'+at.length+'</td></tr>'
+    +'<tr><td>Avaliações trimestrais realizadas</td><td>'+avTri.length+'/'+at.length+' ('+pct(avTri.length,at.length)+')</td></tr>'
+    +'<tr><td>Metas de PDI cumpridas</td><td>'+metasC.length+'/'+metasAb.length+' ('+pct(metasC.length,metasAb.length)+')</td></tr>'
+    +'<tr><td>Análises de torneio entregues (torneios distintos)</td><td>'+tn.length+' ('+[...new Set(tn.map(t=>(t.nome||'').trim().toLowerCase()))].length+' torneios)</td></tr>'
+    +'<tr><td>Jogos registrados (V–D)</td><td>'+jg.length+' ('+V+'V–'+D+'D)</td></tr>'
+    +'<tr><td>Atletas com parecer PROMOVÍVEL</td><td>'+(promo.length?promo.length+' — '+esc(promo.join(', ')):'0')+'</td></tr>'
+    +'</table></div></div>';
+  h+='<div class="card"><h3>2. Torneios acompanhados</h3>'+(tn.length
+    ? '<div class="scroll"><table class="tbl"><tr><th>Torneio</th><th>Atleta</th><th>Data</th><th>Treinador</th></tr>'
+      +tn.map(t=>'<tr><td>'+esc(t.nome)+'</td><td>'+(t.atletaId?esc(nomeA(t.atletaId)):'—')+'</td><td>'+esc(t.data||'')+'</td><td>'+esc(t.treinador||'')+'</td></tr>').join('')+'</table></div>'
+    : '<div class="mini">Nenhum relatório de torneio lançado no trimestre.</div>')+'</div>';
+  h+='<div class="card"><h3>3. Destaques esportivos</h3><textarea id="rDest" placeholder="títulos, campanhas e evoluções relevantes">'+esc(saved.destaques||'')+'</textarea></div>';
+  h+='<div class="card"><h3>4. Pendências e riscos</h3>'
+    +(pend.length?'<div class="mini" style="margin-bottom:6px">Sem avaliação no trimestre: <b>'+esc(pend.join(', '))+'</b></div>':'')
+    +'<textarea id="rPend" placeholder="o que não aconteceu como planejado; sinais de sondagem de atletas">'+esc(saved.pendencias||'')+'</textarea></div>';
+  h+='<div class="card"><h3>5. Decisões solicitadas ao comitê</h3><textarea id="rDec" placeholder="lista objetiva do que precisa ser decidido ou destravado">'+esc(saved.decisoes||'')+'</textarea></div>';
+  h+='<div class="row no-print" style="margin:4px 0 14px"><button class="btn" onclick="relSaveProg()">Salvar textos</button></div>';
+  h+='<div class="card"><div class="mini">Trio técnico: Johan "Yuki" Wachtmeister · Sergio Urbano Luiz · João Guilherme Chiminazzo</div></div>';
+  $('#v-relatorios').innerHTML=h;
+}
+function aggPressao(jogosList){
+  const acc={deuce:[0,0],gp:[0,0],bp:[0,0],sp:[0,0]};
+  for(const j of jogosList){
+    if(!(j.log||[]).length) continue;
+    const an=analyzeMatch(j.cfg||{},j.log);
+    for(const p of an.setPts.flat()){
+      if(p.deuce){ acc.deuce[1]++; if(p.w==='A')acc.deuce[0]++; }
+      if(p.gpA){ acc.gp[1]++; if(p.w==='A')acc.gp[0]++; }
+      if(p.bpA){ acc.bp[1]++; if(p.w==='A')acc.bp[0]++; }
+      if(p.spA){ acc.sp[1]++; if(p.w==='A')acc.sp[0]++; }
+    }
+  }
+  return acc;
+}
+function rRelAtleta(){
+  const a=atleta(S.relAtleta);
+  if(!a){ S.relView=null; rRel(); return; }
+  const tri=S.tri, v=avalDoTri(a.id,tri), vp=avalDoTri(a.id,triShift(tri,-1));
+  const m=mediaNotas(v), mp=mediaNotas(vp);
+  const metasA=S.metas.filter(x=>x.atletaId===a.id);
+  const metasC=metasA.filter(x=>x.status==='cumprida');
+  const jgA=jogosDoTri(tri).filter(j=>j.atletaId===a.id);
+  const vA=jgA.filter(j=>j.resultado==='V').length, dA2=jgA.filter(j=>j.resultado==='D').length;
+
+  /* histórico de avaliações (todos os trimestres) */
+  const hist=S.avaliacoes.filter(x=>x.atletaId===a.id)
+    .sort((x,y)=>x.tri.localeCompare(y.tri))
+    .reduce((arr,x)=>{ const i=arr.findIndex(z=>z.tri===x.tri); if(i>=0)arr[i]=x; else arr.push(x); return arr; },[])
+    .map(x=>({tri:x.tri,med:mediaNotas(x)})).filter(x=>x.med!=null);
+
+  /* estatísticas agregadas de jogos do trimestre */
+  const sum=k=>jgA.reduce((s,j)=>s+(+j.stats?.[k]||0),0);
+  const agg={aces:sum('aces'),df:sum('df'),win:sum('win'),enf:sum('enf'),ef:sum('ef')};
+  const press=aggPressao(jgA);
+  const nLive=jgA.filter(j=>(j.log||[]).length).length;
+
+  /* análises de torneio do atleta */
+  const fn=(a.nome||'').split(' ')[0].toLowerCase();
+  const torns=tornDoTri(tri).filter(t=> t.atletaId===a.id || (!t.atletaId && (t.atletasTxt||'').toLowerCase().includes(fn)));
+
+  /* leitura automática */
+  const insights=[];
+  if(m!=null&&mp!=null){
+    const d=m-mp;
+    if(Math.abs(d)>0.05) insights.push('Média geral '+(d>0?'subiu':'caiu')+' de '+fmt(mp)+' para '+fmt(m)+' em relação a '+triLabel(triShift(tri,-1))+'.');
+    let best=null,worst=null;
+    for(const [k,lbl] of DIM_AV){ const n=v.notas?.[k],np=vp.notas?.[k];
+      if(n&&np){ const dd=n-np; if(dd>0&&(!best||dd>best[1]))best=[lbl,dd]; if(dd<0&&(!worst||dd<worst[1]))worst=[lbl,dd]; } }
+    if(best) insights.push('Maior evolução: '+best[0]+' (+'+best[1]+').');
+    if(worst) insights.push('Ponto de atenção: '+worst[0]+' ('+worst[1]+').');
+  }
+  if(metasA.length) insights.push('Metas do PDI: '+metasC.length+' de '+metasA.length+' cumpridas ('+Math.round(100*metasC.length/metasA.length)+'%).');
+  if(press.sp[1]>=3){ const p=Math.round(100*press.sp[0]/press.sp[1]);
+    insights.push((p<40?'Atenção: converteu apenas ':'Converteu ')+p+'% dos set points ('+press.sp[0]+'/'+press.sp[1]+').'); }
+  if(press.bp[1]>=3){ const p=Math.round(100*press.bp[0]/press.bp[1]);
+    if(p>=60) insights.push('Força competitiva: '+p+'% dos break points convertidos ('+press.bp[0]+'/'+press.bp[1]+').'); }
+  if(jgA.length&&agg.df/jgA.length>=6) insights.push('Duplas faltas altas (média de '+fmt(agg.df/jgA.length)+' por jogo) — prioridade de saque no treino.');
+  if(v&&(v.criterios||[]).filter(Boolean).length>=4&&v.parecer!=='promovivel') insights.push((v.criterios||[]).filter(Boolean).length+'/5 critérios de promoção demonstrados — candidato a reavaliação de etapa.');
+
+  let h='<div class="sec-head no-print"><button class="btn sm ghost" onclick="relBack()">‹ relatórios</button><span style="flex:1"></span><button class="btn sm sec" onclick="relPrint()">🖨 imprimir / PDF</button></div>';
+  h+='<div class="card"><h3>Dossiê do Atleta — '+triLabel(tri)+'</h3><div class="row" style="margin-top:4px"><b>'+esc(a.nome)+'</b><span class="chip clay">'+esc(a.bola||'')+'</span><span class="chip navy">'+esc(a.categoria||'')+'</span>'+(a.grupo?'<span class="mini">'+esc(a.grupo)+'</span>':'')+'</div></div>';
+
+  /* leitura automática */
+  if(insights.length){
+    h+='<div class="card"><h3>Leitura automática do trimestre</h3>'
+      +insights.map(t=>'<div class="row" style="margin:6px 0"><span style="color:var(--clay);font-weight:800">›</span><div style="flex:1;font-size:13.5px">'+esc(t)+'</div></div>').join('')
+      +'<div class="mini" style="margin-top:6px">Gerada dos lançamentos — conferir com o olhar do técnico.</div></div>';
+  }
+
+  /* evolução histórica */
+  if(hist.length>=2){
+    const W=640,H=150;
+    const xs=i=>40+(W-70)*(i/(hist.length-1));
+    const ys=val=>H-25-((val-1)/4)*(H-55);
+    let path='M'+xs(0)+' '+ys(hist[0].med);
+    for(let i=1;i<hist.length;i++) path+=' L'+xs(i)+' '+ys(hist[i].med);
+    h+='<div class="card"><h3>Evolução da média geral</h3>'
+      +'<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto" role="img" aria-label="Evolução da média por trimestre">'
+      +[1,2,3,4,5].map(g=>'<line x1="36" y1="'+ys(g)+'" x2="'+(W-24)+'" y2="'+ys(g)+'" stroke="var(--line)" stroke-width="'+(g===3?1.4:0.6)+'"/><text x="30" y="'+(ys(g)+4)+'" font-size="10" fill="var(--muted)" text-anchor="end">'+g+'</text>').join('')
+      +'<path d="'+path+'" fill="none" stroke="var(--sA)" stroke-width="2.2" stroke-linejoin="round"/>'
+      +hist.map((p,i)=>'<circle cx="'+xs(i)+'" cy="'+ys(p.med)+'" r="4.5" fill="var(--sA)" stroke="var(--surface)" stroke-width="2"><title>'+triLabel(p.tri)+': '+fmt(p.med)+'</title></circle>'
+        +'<text x="'+xs(i)+'" y="'+(ys(p.med)-10)+'" font-size="11" font-weight="600" fill="var(--ink)" text-anchor="middle">'+fmt(p.med)+'</text>'
+        +'<text x="'+xs(i)+'" y="'+(H-8)+'" font-size="10" fill="var(--muted)" text-anchor="middle">'+triLabel(p.tri)+'</text>').join('')
+      +'</svg><div class="mini">Escala 1–5 · 3 = adequado à etapa.</div></div>';
+  }
+
+  /* avaliação do trimestre */
+  h+='<div class="card"><h3>Avaliação do trimestre</h3>';
+  if(v){
+    const delta=(m!=null&&mp!=null)?(m-mp):null;
+    h+='<div class="row"><span class="num" style="font-size:24px;font-weight:800">'+fmt(m)+'</span><span class="mini">média geral'+(mp!=null?' (anterior: '+fmt(mp)+')':'')+'</span>'
+      +(delta!=null?'<span class="delta '+(delta>0.05?'up':delta<-0.05?'dn':'eq')+'">'+(delta>0.05?'▲':delta<-0.05?'▼':'●')+' '+fmt(Math.abs(delta))+'</span>':'')+'</div>'
+      +'<div class="dims">'+DIM_AV.map(([k,lbl])=>{
+        const n=v.notas?.[k]||0, np=vp?.notas?.[k];
+        const dl=(np&&n)?(n>np?' <span class="delta up">▲</span>':n<np?' <span class="delta dn">▼</span>':''):'';
+        return '<div class="dim"><div class="num">'+(n||'—')+dl+'</div><div class="d-lbl">'+lbl+'</div></div>';}).join('')+'</div>'
+      +'<div class="mini" style="margin-top:8px">'+(v.frequencia?'Frequência: <b>'+esc(v.frequencia)+'%</b> · ':'')+'Critérios de promoção: <b>'+(v.criterios||[]).filter(Boolean).length+'/5</b> · Parecer: <b>'+(v.parecer==='promovivel'?'PROMOVÍVEL':v.parecer==='observar'?'observar':'manter na etapa')+'</b>'+(v.autor?' · por '+esc(v.autor):'')+'</div>'
+      +(v.devolutiva?'<div class="mini" style="margin-top:6px"><b>Devolutiva à família:</b> '+esc(v.devolutiva)+'</div>':'');
+  } else h+='<div class="mini">Avaliação de '+triLabel(tri)+' ainda não lançada.</div>';
+  h+='</div>';
+
+  /* metas */
+  h+='<div class="card"><h3>Metas do PDI</h3>'
+    +(metasA.length?'<div class="mini" style="margin-bottom:6px"><b>'+metasC.length+'/'+metasA.length+'</b> cumpridas'+(metasA.some(x=>x.revisadaEm)?' · última revisão em avaliação: '+triLabel(metasA.filter(x=>x.revisadaEm).sort((x,y)=>y.revisadaEm.localeCompare(x.revisadaEm))[0].revisadaEm):'')+'</div>':'')
+    +(metasA.length
+    ? metasA.map(x=>'<div class="row" style="margin:6px 0"><div style="flex:1"><b>'+esc(x.texto)+'</b><div class="mini">'+(x.categoria?esc(x.categoria)+' · ':'')+(x.indicador?'Indicador: '+esc(x.indicador)+' · ':'')+(x.prazo?'Prazo: '+esc(x.prazo):'')+'</div></div>'
+      +(x.status==='cumprida'?'<span class="chip ok">cumprida</span>':x.status==='nao'?'<span class="chip bad">não cumprida</span>':'<span class="chip warn">em andamento</span>')+'</div>').join('')
+    : '<div class="mini">Nenhuma meta lançada.</div>')+'</div>';
+
+  /* competição: jogos + estatísticas agregadas + pressão */
+  h+='<div class="card"><h3>Competição no trimestre</h3><div class="mini" style="margin-bottom:6px">'+jgA.length+' jogo(s) · '+vA+'V–'+dA2+'D'+(nLive?' · '+nLive+' com marcação ponto a ponto':'')+'</div>';
+  if(jgA.length){
+    h+='<div class="stat-line" style="margin-bottom:8px"><span>Aces: <b>'+agg.aces+'</b></span><span>Winners: <b>'+agg.win+'</b></span><span>Duplas faltas: <b>'+agg.df+'</b></span><span>Erros forçados: <b>'+agg.ef+'</b></span><span>Erros não forçados: <b>'+agg.enf+'</b></span></div>';
+    h+='<div class="scroll"><table class="tbl"><tr><th>Data</th><th>Adversário</th><th>Placar</th><th>R</th><th></th></tr>'
+      +jgA.map(j=>'<tr><td>'+esc((j.data||'').slice(5))+'</td><td>'+esc(j.adversario||'')+'</td><td>'+esc(j.placar||'')+'</td><td>'+(j.resultado==='V'?'<span class="chip ok">V</span>':j.resultado==='D'?'<span class="chip bad">D</span>':'<span class="chip warn">INT</span>')+'</td><td>'+((j.log||[]).length?'<button class="btn sm sec no-print" onclick="repOpen(\''+j.id+'\')">📊</button>':'')+'</td></tr>').join('')+'</table></div>';
+  } else h+='<div class="mini">Nenhum jogo no trimestre.</div>';
+  h+='</div>';
+  if(press.deuce[1]+press.gp[1]+press.bp[1]+press.sp[1]>0){
+    const n1=esc((a.nome||'').split(' ')[0]);
+    h+='<div class="card"><h3>Pressão — agregado dos jogos marcados</h3><div class="mini" style="margin-bottom:6px">% dos pontos de pressão que '+n1+' converteu, somando todas as partidas ponto a ponto do trimestre.</div>'
+      +[['Deuce','deuce'],['Game points','gp'],['Break points','bp'],['Set points','sp']].map(([lbl,k])=>{
+        const [w,t]=press[k]; const p=t?Math.round(100*w/t):null;
+        return '<div class="lev-row"><div class="l-lbl">'+lbl+'</div><div class="lev-bars"><div><i style="width:'+(p==null?0:Math.max(2,p*0.9))+'%;background:var(--sA)"></i>'+(p==null?'—':p+'% ('+w+'/'+t+')')+'</div></div></div>';
+      }).join('')+'</div>';
+  }
+
+  /* análises de torneio */
+  if(torns.length){
+    h+='<div class="card"><h3>Análises de torneio do treinador</h3>'
+      +torns.map(t=>{
+        const r=t.respostas||{};
+        return '<div style="margin:10px 0"><b>'+esc(t.nome)+'</b> <span class="mini">'+esc(t.data||'')+(t.treinador?' · '+esc(t.treinador):'')+'</span>'
+          +(t.atletaId?'<div class="row" style="margin-top:5px">'+TORN_QS.filter(([k])=>r[k]).map(([k,q])=>'<span class="chip '+(QPOS[r[k]]||'navy')+'" title="'+esc(q)+'">'+esc(r[k])+'</span>').join('')+'</div>':'')
+          +(r.prioridade?'<div class="mini" style="margin-top:4px">Prioridade pós-torneio: <b>'+esc(r.prioridade)+'</b></div>':'')
+          +(t.obs?'<div class="mini" style="margin-top:4px"><b>Anotações do treinador:</b> '+esc(t.obs)+'</div>':'')
+          +(t.aprendizados?'<div class="mini">Aprendizados: '+esc(t.aprendizados)+'</div>':'')+'</div>';
+      }).join('')+'</div>';
+  }
+  $('#v-relatorios').innerHTML=h;
+}
+
+/* ---------- IMPORTAÇÃO DE RESULTADOS ---------- */
+const DEFAULT_IMPORT = JSON.stringify([
+  {"atleta":"Luíza Mafra","data":"2026-07-04","torneio":"Torneio TECC — Quartas de final","adversario":"Angelina Franco","placar":"2/6 4/6","resultado":"D","stats":{"win":10,"enf":28,"ef":0,"aces":5,"df":12}},
+  {"atleta":"Luíza Mafra","data":"2026-06-28","adversario":"Gabriela Oliveira","placar":"0/2 (sets)","resultado":"D"},
+  {"atleta":"Luíza Mafra","adversario":"Valentina Salinas","placar":"","resultado":"V"}
+],null,1);
+let _xlsxLoading=null;
+function ensureXLSX(){
+  if(window.XLSX) return Promise.resolve();
+  if(_xlsxLoading) return _xlsxLoading;
+  _xlsxLoading=new Promise((res,rej)=>{
+    const sc=document.createElement('script');
+    sc.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    sc.onload=()=>res(); sc.onerror=()=>{_xlsxLoading=null;rej(new Error('xlsx load'))};
+    document.head.appendChild(sc);
+  });
+  return _xlsxLoading;
+}
+const _norm=t=>String(t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[*()%/º°]/g,' ').replace(/\s+/g,' ').trim();
+const HEAD_MAP=[[ 'atleta','atleta'],['data','data'],['tipo do torneio','tipoTorneio'],['tipo de quadra','quadra'],['torneio','torneio'],['adversario','adversario'],['clube','clubeAdv'],['placar','placar'],['resultado','resultado'],['1 servico','psv'],['1o servico','psv'],['servico','psv'],['psv','psv'],['aces','aces'],['duplas faltas','df'],['dupla falta','df'],['winners','win'],['winner','win'],['erros forcados','ef'],['erro forcado','ef'],['erros nao forcados','enf'],['erro nao forcado','enf'],['anotado','anotador']];
+function mapHeader(h){ const n=_norm(h); for(const [k,v] of HEAD_MAP){ if(n===k||n.startsWith(k)) return v; } return null; }
+function xlDate(v){
+  if(v==null||v==='') return '';
+  if(typeof v==='number'&&v>20000&&v<80000){ const d=new Date(Math.round((v-25569)*86400*1000)); return d.toISOString().slice(0,10); }
+  const t=String(v).trim();
+  let m=t.match(/^(\d{4})-(\d{2})-(\d{2})/); if(m) return m[1]+'-'+m[2]+'-'+m[3];
+  m=t.match(/^(\d{1,2})[\/.](\d{1,2})[\/.](\d{2,4})/);
+  if(m){ let y=m[3].length===2?'20'+m[3]:m[3]; return y+'-'+String(m[2]).padStart(2,'0')+'-'+String(m[1]).padStart(2,'0'); }
+  return '';
+}
+function rowsToRecords(matrix){
+  if(!matrix.length) return [];
+  const heads=matrix[0].map(mapHeader);
+  if(!heads.includes('atleta')) throw new Error('Cabeçalho não reconhecido — a primeira linha precisa ter as colunas da planilha modelo (Atleta, Data, ...).');
+  const recs=[];
+  const EX=['luiza mafra','04/07/2026'];
+  for(const row of matrix.slice(1)){
+    const o={}; row.forEach((cell,i)=>{ const k=heads[i]; if(k&&cell!=null&&cell!=='') o[k]=cell; });
+    if(!o.atleta) continue;
+    if(_norm(o.atleta)===EX[0]&&String(o.adversario||'').trim()==='Angelina Franco'&&String(o.placar||'').trim()==='2/6 4/6'&&_norm(o.anotador||'')==='nelson') continue; // linha de exemplo do modelo
+    const num=x=>{ const n=Number(String(x).replace(',','.')); return isFinite(n)?n:null; };
+    const res=_norm(o.resultado); 
+    recs.push({
+      atleta:String(o.atleta).trim(), data:xlDate(o.data), torneio:String(o.torneio||'').trim(),
+      tipoTorneio:String(o.tipoTorneio||'').trim(), quadra:String(o.quadra||'').trim(),
+      adversario:String(o.adversario||'').trim(), clubeAdv:String(o.clubeAdv||'').trim(),
+      placar:String(o.placar||'').trim(),
+      resultado: res.startsWith('v')?'V':res.startsWith('d')?'D':'I',
+      anotador:String(o.anotador||'').trim(),
+      stats:{psv:num(o.psv),aces:num(o.aces),df:num(o.df),win:num(o.win),ef:num(o.ef),enf:num(o.enf)},
+    });
+  }
+  return recs;
+}
+async function importRecords(arr){
+  let n=0;
+  for(const r of arr){
+    if(!r||!r.atleta) continue;
+    const nome=String(r.atleta).trim();
+    let a=S.atletas.find(x=>(x.nome||'').trim().toLowerCase()===nome.toLowerCase());
+    let aid=a?a.id:null;
+    if(!aid){
+      const ref=await S.db.collection('atletas').add({nome,ativo:true,ts:Date.now()});
+      aid=ref.id; S.atletas.push({id:aid,nome,ativo:true});
+    }
+    await S.db.collection('jogos').add({atletaId:aid,data:r.data||'',torneio:r.torneio||'',tipoTorneio:r.tipoTorneio||'',quadra:r.quadra||r.clube||'',adversario:r.adversario||'',clubeAdv:r.clube||r.clubeAdv||'',placar:r.placar||'',resultado:r.resultado==='V'?'V':r.resultado==='D'?'D':'I',stats:r.stats||{},anotador:r.anotador||'importado',ts:Date.now()});
+    n++;
+  }
+  return n;
+}
+window.fImport=function(){
+  openDlg('Importar resultados',
+    '<div class="mini" style="margin-bottom:6px">Use a <b>Planilha de Importação de Jogos do TCC</b> (peça ao coordenador do programa): preencha um jogo por linha e envie o arquivo aqui — ou copie as linhas no Excel e cole abaixo.</div>'
+    +'<label>1) Arquivo da planilha (.xlsx / .csv)</label><input id="fArq" type="file" accept=".xlsx,.xls,.csv">'
+    +'<label>2) Ou cole aqui as linhas copiadas da planilha (com o cabeçalho)</label><textarea id="fCola" style="min-height:90px" placeholder="Atleta\tData\tTorneio\t..."></textarea>'
+    +'<details style="margin-top:10px"><summary class="mini" style="cursor:pointer">Modo avançado (JSON)</summary>'
+    +'<textarea id="fImp" style="min-height:140px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px">'+esc(DEFAULT_IMPORT)+'</textarea></details>',
+    async()=>{
+      if(!S.db){ dlgErr('Sem conexão com o banco.'); return false }
+      try{
+        let recs=null;
+        const file=$('#fArq').files[0];
+        if(file){
+          try{ await ensureXLSX(); }catch(e){ dlgErr('Não consegui carregar o leitor de planilhas — cole as linhas no campo 2.'); return false }
+          const buf=await file.arrayBuffer();
+          const wb=XLSX.read(buf,{type:'array'});
+          const shName=wb.SheetNames.includes('Jogos')?'Jogos':wb.SheetNames[0];
+          const matrix=XLSX.utils.sheet_to_json(wb.Sheets[shName],{header:1,raw:true,defval:''});
+          recs=rowsToRecords(matrix);
+        } else if($('#fCola').value.trim()){
+          const lines=$('#fCola').value.trim().split(/\r?\n/);
+          const sep=lines[0].includes('\t')?'\t':';';
+          recs=rowsToRecords(lines.map(l=>l.split(sep)));
+        } else {
+          const arr=JSON.parse($('#fImp').value);
+          if(!Array.isArray(arr)) throw new Error('JSON deve ser uma lista.');
+          const n=await importRecords(arr);
+          toast(n+' jogo(s) importado(s) ✓'); return true;
+        }
+        if(!recs.length){ dlgErr('Nenhum jogo válido encontrado (a coluna Atleta está preenchida?).'); return false }
+        const n=await importRecords(recs);
+        toast(n+' jogo(s) importado(s) ✓'); return true;
+      }catch(e){ dlgErr(e&&e.code?errMsg(e):(e.message||'Não foi possível ler os dados.')); return false }
+    },'Importar');
+};
+
+/* ---------- JOGO AO VIVO ---------- */
+window.fJogoLive=function(){
+  openDlg('Nova partida ao vivo',
+    '<label>Atleta</label>'+selAtletas('fAtl')
+    +'<div class="grid2"><div><label>Adversário</label><input id="fAdv" placeholder="nome"></div><div><label>Clube do adversário</label><input id="fClube" placeholder="opcional"></div></div>'
+    +'<div class="grid2"><div><label>Torneio</label><input id="fTorneio" placeholder="opcional"></div><div><label>Data</label><input id="fData" type="date" value="'+new Date().toISOString().slice(0,10)+'"></div></div>'
+    +'<div class="grid2"><div><label>Tipo do torneio</label><select id="fTipoT">'+selOpts(TIPOS_TORNEIO)+'</select></div><div><label>Tipo de quadra</label><select id="fQuadra">'+selOpts(QUADRAS,'Saibro')+'</select></div></div>'
+    +'<label>Formato</label><select id="fFmt">'
+      +'<option value="3-6-mtb">Melhor de 3 — match tiebreak no 3º (padrão juvenil)</option>'
+      +'<option value="3-6">Melhor de 3 sets completos</option>'
+      +'<option value="1-6">1 set até 6</option>'
+      +'<option value="1-4">1 set curto até 4 (bola verde)</option>'
+      +'<option value="3-4-mtb">Melhor de 3 sets curtos até 4 — match TB no 3º</option></select>'
+    +'<label>Game empatado em 40/40</label><select id="fNoAd"><option value="0">Com vantagem</option><option value="1">Ponto decisivo (no-ad)</option></select>'
+    +'<label>Quem saca primeiro</label><select id="fSrv"><option value="A">Atleta</option><option value="O">Adversário</option></select>',
+    async()=>{
+      const aid=$('#fAtl').value; if(!aid){dlgErr('Selecione o atleta.');return false}
+      const [sets,games,mtb]=$('#fFmt').value.split('-');
+      const cfg={sets:+sets,games:+games,mtb:mtb==='mtb',noAd:$('#fNoAd').value==='1',srv:$('#fSrv').value};
+      if(!S.db){dlgErr('Sem conexão com o banco.');return false}
+      try{
+        const ref=await S.db.collection('jogos').add({atletaId:aid,data:$('#fData').value,torneio:$('#fTorneio').value.trim(),tipoTorneio:$('#fTipoT').value,quadra:$('#fQuadra').value,adversario:$('#fAdv').value.trim(),clubeAdv:$('#fClube').value.trim(),cfg,log:[],finalizado:false,ts:Date.now()});
+        S.liveId=ref.id; S.tab='jogos'; render(); return true;
+      }catch(e){ dlgErr(errMsg(e)); return false }
+    },'Começar partida');
+};
+function liveDoc(){ return S.jogos.find(j=>j.id===S.liveId); }
+function semId(j){ const c={...j}; delete c.id; return c; }
+async function liveSave(j){ try{ await S.db.collection('jogos').doc(j.id).set({...semId(j),ts:Date.now()}); }catch(e){ toast(errMsg(e),true); } }
+window.livePoint=function(w){
+  const j=liveDoc(); if(!j) return;
+  const st=computeMatch(j.cfg,j.log); if(st.over) return;
+  S.pend=w; render();
+};
+window.liveOutcome=function(tag){
+  const j=liveDoc(); if(!j||!S.pend) return;
+  j.log=[...(j.log||[]),{w:S.pend,tag}]; S.pend=null; render(); liveSave(j);
+};
+window.livePendCancel=function(){ S.pend=null; render(); };
+window.liveUndo=function(){
+  const j=liveDoc(); if(!j||!(j.log||[]).length) return;
+  S.pend=null; j.log=j.log.slice(0,-1); render(); liveSave(j);
+};
+window.liveFinSheet=function(v){ S.finSheet=!!v; render(); };
+window.liveFinish=async function(forceRes){
+  const j=liveDoc(); if(!j) return;
+  const st=computeMatch(j.cfg,j.log);
+  const resultado = st.over ? (st.winner==='A'?'V':'D') : forceRes;   // 'V' | 'D' | 'I'
+  if(!resultado) return;
+  const stats=statsFromLog(j.log||[]);
+  const sufixo = st.over ? '' : (resultado==='I' ? ' (interrompida)' : ' (encerrada antes do fim)');
+  const body={...semId(j),finalizado:true,resultado,placar:(placarStr(st)||'0/0')+sufixo,stats,ts:Date.now()};
+  try{ await S.db.collection('jogos').doc(j.id).set(body); S.liveId=null; S.finSheet=false; S.pend=null;
+    if((j.log||[]).length){ S.repId=j.id; S.repSet=0; }
+    toast('Partida salva ✓'); render(); }
+  catch(e){ toast(errMsg(e),true); }
+};
+window.liveExit=function(){ S.liveId=null; S.pend=null; S.finSheet=false; render(); };
+function rLive(){
+  const j=liveDoc();
+  if(!j){ S.liveId=null; rJogos(); return; }
+  const st=computeMatch(j.cfg||{},j.log||[]);
+  const [dA,dO]=ptsDisplay(st);
+  const nome=nomeA(j.atletaId), adv=j.adversario||'Adversário';
+  const last=(j.log||[])[(j.log||[]).length-1];
+  const setCols=(who)=>{
+    let cols=st.sets.map(s=>{ const g=who==='A'?(s.mtb?s.tbA:s.gA):(s.mtb?s.tbO:s.gO); const won=who==='A'?(s.mtb?s.tbA>s.tbO:s.gA>s.gO):(s.mtb?s.tbO>s.tbA:s.gO>s.gA); return '<span class="sb-set'+(won?' won':'')+'">'+g+'</span>'; }).join('');
+    if(!st.over) cols+='<span class="sb-set won">'+(st.mtb?'':who==='A'?st.gA:st.gO)+'</span>';
+    return cols;
+  };
+  let h='<div class="sec-head"><button class="btn sm ghost" onclick="liveExit()">‹ jogos</button><h2 style="font-size:16px">'+esc(j.torneio||'Partida')+'</h2><span class="cnt">'+esc(j.data||'')+'</span></div>';
+  h+='<div class="sb">'
+    +'<div class="sb-row"><div class="sb-nome">'+(st.srv==='A'&&!st.over?'<span class="srv"></span>':'')+'<span>'+esc(nome)+'</span></div><div class="sb-nums">'+setCols('A')+(st.over?'':'<span class="sb-pts">'+dA+'</span>')+'</div></div>'
+    +'<div class="sb-row" style="border-top:1px solid var(--line)"><div class="sb-nome">'+(st.srv==='O'&&!st.over?'<span class="srv"></span>':'')+'<span>'+esc(adv)+'</span></div><div class="sb-nums">'+setCols('O')+(st.over?'':'<span class="sb-pts">'+dO+'</span>')+'</div></div>'
+    +(st.tb?'<div class="mini" style="text-align:center;margin-top:4px">tiebreak</div>':'')
+    +(st.mtb?'<div class="mini" style="text-align:center;margin-top:4px">match tiebreak — até 10</div>':'')
+    +'</div>';
+  const stats=statsFromLog(j.log||[]);
+  if(st.over){
+    h+='<div class="fim-banner">Fim de jogo — '+(st.winner==='A'?esc(nome):esc(adv))+' venceu · '+esc(placarStr(st))+'</div>'
+     +'<div class="live-actions"><button class="btn" style="flex:1" onclick="liveFinish()">Salvar resultado</button><button class="btn ghost" onclick="liveUndo()">↩ desfazer último ponto</button></div>';
+  } else if(S.finSheet){
+    h+='<div class="out-title">Finalizar a partida agora?</div>'
+      +'<div class="mini" style="text-align:center">O placar parcial ('+esc(placarStr(st)||'0/0')+') fica registrado.</div>'
+      +'<div class="out-grid">'
+      +'<button onclick="liveFinish(\'V\')">Vitória de '+esc(nome.split(' ')[0])+'<br><span class="mini">(abandono / W.O. do adversário)</span></button>'
+      +'<button onclick="liveFinish(\'D\')">Derrota<br><span class="mini">(abandono / retirada)</span></button>'
+      +'<button class="full" onclick="liveFinish(\'I\')">Interrompida — sem vencedor (chuva, luz, etc.)</button>'
+      +'<button class="full" onclick="liveFinSheet(false)">← voltar ao jogo</button></div>';
+  } else if(S.pend){
+    const quem = S.pend==='A'?nome.split(' ')[0]:adv.split(' ')[0];
+    const sacador = st.srv===S.pend; // vencedor do ponto estava sacando?
+    h+='<div class="out-title">Ponto de <b>'+esc(quem)+'</b> — como foi?</div>'
+      +'<div class="out-grid">'
+      +(sacador?'<button onclick="liveOutcome(\'ace\')">Ace</button>':'')
+      +'<button '+(sacador?'':'class="full" ')+'onclick="liveOutcome(\'win\')">Winner</button>'
+      +'<button onclick="liveOutcome(\'ef\')">Erro forçado<br><span class="mini">do adversário do ponto</span></button>'
+      +'<button onclick="liveOutcome(\'enf\')">Erro não forçado<br><span class="mini">do adversário do ponto</span></button>'
+      +(sacador?'':'<button class="full" onclick="liveOutcome(\'df\')">Dupla falta</button>')
+      +'<button class="full" onclick="livePendCancel()">← cancelar (não foi ponto de '+esc(quem)+')</button></div>';
+  } else {
+    h+='<div class="pt-btns"><button class="pa" onclick="livePoint(\'A\')">Ponto<br>'+esc(nome.split(' ')[0])+'</button><button class="po" onclick="livePoint(\'O\')">Ponto<br>'+esc(adv.split(' ')[0])+'</button></div>';
+    h+='<div class="live-actions"><button class="btn ghost" onclick="liveUndo()">↩ desfazer ponto</button>'
+      +'<span style="flex:1"></span>'
+      +'<button class="btn sec" onclick="liveFinSheet(true)">◼ Finalizar partida</button></div>'
+      +'<div class="mini" style="margin-top:8px">'+esc(nome.split(' ')[0])+': '+stats.aces+' aces · '+stats.win+' winners · '+stats.df+' duplas faltas · '+stats.ef+' EF · '+stats.enf+' ENF</div>';
+  }
+  $('#v-jogos').innerHTML=h;
+}
+
+/* ================= boot (por último: tudo acima precisa existir) ================= */
+window.switchTab=function(t){
+  S.tab=t;
+  document.querySelectorAll('#nav button').forEach(x=>x.classList.toggle('act',x.dataset.t===t));
+  document.querySelectorAll('main section').forEach(x=>x.hidden = x.id !== 'v-'+t);
+  render();
+};
+document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>switchTab(b.dataset.t));
+window.goDossie=function(id){ S.relAtleta=id; S.relView='atleta'; switchTab('relatorios'); };
+$('#triPrev').onclick=()=>{S.tri=triShift(S.tri,-1);render()};
+$('#triNext').onclick=()=>{S.tri=triShift(S.tri,1);render()};
+
+function localDB(){
+  let mem={}; let persist=true;
+  try{ mem=JSON.parse(localStorage.getItem('tccdb')||'{}'); }catch(e){ persist=false; }
+  const ls={};
+  const saveLS=()=>{ if(!persist) return; try{ localStorage.setItem('tccdb',JSON.stringify(mem)); }catch(e){} };
+  const notify=c=>{ (ls[c]||[]).forEach(f=>f({docs:Object.entries(mem[c]||{}).map(([id,d])=>({id,exists:true,data:()=>d,metadata:{}})),size:0,empty:false,docChanges:()=>[],metadata:{}})); };
+  const docRef=(c,id)=>({
+    set:async d=>{ (mem[c]=mem[c]||{})[id]=d; saveLS(); notify(c); },
+    update:async d=>{ if(!mem[c]||!mem[c][id]){const e=new Error('inexistente');e.code='invalid_argument';throw e;} Object.assign(mem[c][id],d); saveLS(); notify(c); },
+    delete:async ()=>{ if(mem[c])delete mem[c][id]; saveLS(); notify(c); },
+  });
+  return {
+    doc:path=>{ const seg=path.split('/'); return docRef(seg.slice(0,-1).join('/'),seg[seg.length-1]); },
+    collection:c=>({
+      add:async d=>{ const id='l'+Date.now().toString(36)+Math.random().toString(36).slice(2,7); (mem[c]=mem[c]||{})[id]=d; saveLS(); notify(c); return {id}; },
+      doc:id=>docRef(c,id),
+      onSnapshot:(f)=>{ (ls[c]=ls[c]||[]).push(f); setTimeout(()=>notify(c),10); return ()=>{}; },
+    }),
+  };
+}
+function applyRole(){
+  const ath = S.role==='athlete';
+  document.querySelectorAll('#nav button').forEach(b=>{ b.hidden = ath && b.dataset.t!=='jogos'; });
+  if(ath && S.tab!=='jogos'){
+    S.tab='jogos';
+    document.querySelectorAll('#nav button').forEach(x=>x.classList.toggle('act',x.dataset.t==='jogos'));
+    document.querySelectorAll('main section').forEach(x=>x.hidden = x.id!=='v-jogos');
+  }
+}
+(async()=>{
+  try{ render(); }catch(e){ console.error(e); }
+  try{ S.db = (typeof claude!=='undefined') ? await claude.use('db') : null; }catch(e){ S.db=null; }
+  if(!S.db){
+    // fora do claude.ai (ex.: GitHub Pages) → modo local de teste, dados só neste navegador
+    S.db=localDB(); S.local=true; S.role='coach';
+    const off=$('#offline');
+    off.textContent='Modo local de teste — os dados ficam salvos apenas neste navegador. A versão oficial do clube (link do claude.ai) usa o banco compartilhado da equipe.';
+    off.hidden=false;
+  } else {
+    $('#st').classList.add('on');
+    // papel do usuário: escrita de teste num caminho só de treinador; atleta (nível "pode ver") é recusado pelo banco
+    try{ await S.db.doc('probe/whoami').set({ts:Date.now()}); S.role='coach'; }
+    catch(e){ S.role = (e&&e.code)==='invalid_argument' ? 'athlete' : 'coach'; }
+  }
+  applyRole();
+  for(const name of ['atletas','avaliacoes','metas','torneios','jogos','relatorios']){
+    S.db.collection(name).onSnapshot(snap=>{
+      S[name]=snap.docs.filter(d=>d.exists).map(d=>({id:d.id,...d.data()}));
+      try{ render(); }catch(e){ console.error(e); }
+    },err=>{ console.error(name,err); });
+  }
+  try{ render(); }catch(e){ console.error(e); }
+})();
+</script>
+
+</body></html>
