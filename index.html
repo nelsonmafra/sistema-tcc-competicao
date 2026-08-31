@@ -1382,10 +1382,11 @@ $('#triNext').onclick=()=>{S.tri=triShift(S.tri,1);render()};
 const COLS=['atletas','avaliacoes','metas','torneios','jogos','relatorios'];
 
 /* ---------- 1) Supabase ---------- */
-/* versão fixa primeiro (previsível); se o CDN não tiver essa, cai para a última 2.x */
-const SB_LIBS=['https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js',
-               'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js',
-               'https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js'];
+/* última 2.x primeiro — é a que suporta as chaves novas (sb_publishable_...);
+   as seguintes são reservas, caso um dos CDNs esteja fora do ar */
+const SB_LIBS=['https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js',
+               'https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js',
+               'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js'];
 /* aceita a URL do projeto com ou sem a parte final (/rest/v1, /auth/v1...),
    que é o que aparece copiado de algumas telas do painel do Supabase */
 function sbCfg(){
