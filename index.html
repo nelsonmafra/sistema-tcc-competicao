@@ -1382,12 +1382,23 @@ $('#triNext').onclick=()=>{S.tri=triShift(S.tri,1);render()};
 const COLS=['atletas','avaliacoes','metas','torneios','jogos','relatorios'];
 
 /* ---------- 1) Supabase ---------- */
-const SB_LIB='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js';
+/* versão fixa primeiro (previsível); se o CDN não tiver essa, cai para a última 2.x */
+const SB_LIBS=['https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js',
+               'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js',
+               'https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js'];
 function sbCfg(){ const c=window.TCC_CONFIG||{}; return {url:String(c.SUPABASE_URL||'').trim().replace(/\/+$/,''), key:String(c.SUPABASE_ANON_KEY||'').trim()}; }
 function sbConfigurado(){ const c=sbCfg(); return /^https:\/\/\S+$/.test(c.url) && c.key.length>30; }
 function carregarScript(src){ return new Promise((ok,falhou)=>{ const el=document.createElement('script'); el.src=src; el.onload=()=>ok(); el.onerror=()=>falhou(new Error('não carregou '+src)); document.head.appendChild(el); }); }
 /* a biblioteca vem do CDN, a não ser que a página já a tenha carregado */
-async function garantirLibSupabase(){ if(window.supabase&&window.supabase.createClient) return; await carregarScript(SB_LIB); }
+async function garantirLibSupabase(){
+  if(window.supabase&&window.supabase.createClient) return;
+  let ultimo=null;
+  for(const src of SB_LIBS){
+    try{ await carregarScript(src); }catch(e){ ultimo=e; continue; }
+    if(window.supabase&&window.supabase.createClient) return;
+  }
+  throw ultimo||new Error('biblioteca do Supabase não carregou');
+}
 /* traduz o erro do Postgres para os códigos que errMsg() já entende */
 function sbErr(e){
   const err=new Error((e&&e.message)||'erro no banco');
