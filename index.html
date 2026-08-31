@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="light dark">
 <title>Sistema TCC Competição</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
 <meta name="description" content="Programa de Tênis de Competição do Tênis Clube de Campinas — atletas, avaliações trimestrais, metas de PDI, torneios, jogos ao vivo e relatórios.">
 <style>
   html{color-scheme:light dark}
@@ -169,6 +170,16 @@ a.link{color:var(--clay)}
 button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--navy);outline-offset:1px}
 @media(min-width:720px){ nav{position:sticky;top:52px;bottom:auto;border-top:0;border-bottom:1px solid var(--line);justify-content:flex-start;gap:4px;padding:4px 12px} nav button{flex:none;flex-direction:row;font-size:13px;padding:8px 12px} body{padding-bottom:20px} }
 @media (prefers-reduced-motion: reduce){ *{transition:none!important;animation:none!important} }
+/* tela de entrada do banco do clube */
+body.trancado{overflow:hidden}
+#login{position:fixed;inset:0;z-index:60;background:var(--paper);display:flex;align-items:center;justify-content:center;padding:20px}
+#login form{background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:22px;width:min(380px,100%)}
+#login h1{margin:0;font-family:var(--font);font-size:20px;font-weight:800;letter-spacing:.2px}
+#login h1 b{color:var(--clay)}
+#login .lg-sub{color:var(--muted);font-size:12.5px;margin:4px 0 6px}
+#login button{width:100%;margin-top:16px}
+#lgErr{padding:8px 0 0}
+#sair{margin-left:8px}
 </style>
 
 <header>
@@ -179,6 +190,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
     <div class="tri-label" id="triLbl"></div>
     <button id="triNext" aria-label="Próximo trimestre">›</button>
   </div>
+  <button class="btn sm ghost" id="sair" hidden>sair</button>
 </header>
 
 <nav id="nav">
@@ -192,7 +204,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 </nav>
 
 <main>
-  <div id="offline" class="banner" hidden>Sem conexão com o banco de dados compartilhado. Abra esta página pelo link publicado no claude.ai, logado, para lançar e ver os dados do programa.</div>
+  <div id="offline" class="banner" hidden>Sem conexão com o banco de dados compartilhado.</div>
   <section id="v-painel"></section>
   <section id="v-atletas" hidden></section>
   <section id="v-avaliacoes" hidden></section>
@@ -204,6 +216,21 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 
 <dialog id="dlg"><div id="dlgInner"></div></dialog>
 
+<div id="login" hidden>
+  <form id="loginForm">
+    <h1>TCC <b>Competição</b></h1>
+    <div class="lg-sub">Programa de Tênis de Competição · Tênis Clube de Campinas</div>
+    <label for="lgMail">E-mail</label>
+    <input id="lgMail" type="email" autocomplete="username" required>
+    <label for="lgPass">Senha</label>
+    <input id="lgPass" type="password" autocomplete="current-password" required>
+    <button class="btn" id="lgBtn" type="submit">Entrar</button>
+    <div class="dlg-err" id="lgErr"></div>
+    <div class="mini" style="margin-top:10px">Sem acesso? Peça ao coordenador do programa para criar o seu usuário.</div>
+  </form>
+</div>
+
+<script src="config.js"></script>
 <script>
 'use strict';
 /* ================= estado ================= */
@@ -232,6 +259,8 @@ function errMsg(e){
   if(c==='quota_exceeded') return 'Limite de registros do banco atingido — me avise para arquivarmos dados antigos.';
   if(c==='invalid_argument') return 'Dados inválidos para o banco. Confira os campos e tente de novo.';
   if(c==='revoked') return 'Seu acesso mudou — recarregue a página.';
+  if(c==='forbidden') return 'Seu perfil não tem permissão para esta ação. Fale com o treinador do programa.';
+  if(c==='unauthenticated') return 'Sua sessão expirou — recarregue a página e entre de novo.';
   return 'Falha temporária de conexão. Tente novamente em alguns segundos.';
 }
 /* ================= gravação ================= */
@@ -1331,6 +1360,76 @@ window.goDossie=function(id){ S.relAtleta=id; S.relView='atleta'; switchTab('rel
 $('#triPrev').onclick=()=>{S.tri=triShift(S.tri,-1);render()};
 $('#triNext').onclick=()=>{S.tri=triShift(S.tri,1);render()};
 
+/* ================= banco de dados =================
+   Todo o app conversa com o banco por esta interface única — a mesma desde a
+   primeira versão, quando os dados viviam na capability `db` do artifact:
+
+     db.collection('jogos').add({...})             -> {id}
+     db.collection('jogos').doc(id).set({...})     -> grava o documento inteiro
+     db.collection('jogos').doc(id).update({...})  -> altera só os campos passados
+     db.collection('jogos').doc(id).delete()
+     db.collection('jogos').onSnapshot(cb, erroCb) -> cb a cada mudança
+     db.doc('jogos/ID')                            -> atalho para collection().doc()
+
+   Três implementações, escolhidas no boot nesta ordem:
+     1) supabaseDB — banco compartilhado do clube (Postgres no Supabase), ligado
+        quando o config.js está preenchido. Entrada por e-mail e senha; quem
+        pode o quê é decidido pelo próprio banco (ver supabase/schema.sql):
+        treinador tem acesso total, atleta só lança os próprios jogos e lê
+        elenco e jogos (os relatórios de partida).
+     2) claude db — capability de artifact, quando aberto pelo claude.ai.
+     3) localDB   — localStorage: modo de teste, dados só neste navegador. */
+const COLS=['atletas','avaliacoes','metas','torneios','jogos','relatorios'];
+
+/* ---------- 1) Supabase ---------- */
+const SB_LIB='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js';
+function sbCfg(){ const c=window.TCC_CONFIG||{}; return {url:String(c.SUPABASE_URL||'').trim().replace(/\/+$/,''), key:String(c.SUPABASE_ANON_KEY||'').trim()}; }
+function sbConfigurado(){ const c=sbCfg(); return /^https:\/\/\S+$/.test(c.url) && c.key.length>30; }
+function carregarScript(src){ return new Promise((ok,falhou)=>{ const el=document.createElement('script'); el.src=src; el.onload=()=>ok(); el.onerror=()=>falhou(new Error('não carregou '+src)); document.head.appendChild(el); }); }
+/* a biblioteca vem do CDN, a não ser que a página já a tenha carregado */
+async function garantirLibSupabase(){ if(window.supabase&&window.supabase.createClient) return; await carregarScript(SB_LIB); }
+/* traduz o erro do Postgres para os códigos que errMsg() já entende */
+function sbErr(e){
+  const err=new Error((e&&e.message)||'erro no banco');
+  const c=String((e&&e.code)||''), st=(e&&e.status)||0;
+  if(c==='42501'||c==='PGRST301'||st===401||st===403) err.code='forbidden';
+  else if(c==='PGRST116'||c.indexOf('23')===0||c.indexOf('22')===0) err.code='invalid_argument';
+  else err.code='unavailable';
+  return err;
+}
+function supabaseDB(sb){
+  const subs={}, timers={};
+  const snap=rows=>({docs:rows.map(r=>({id:r.id,exists:true,data:()=>r.data||{},metadata:{}})),size:rows.length,empty:!rows.length,docChanges:()=>[],metadata:{}});
+  async function puxar(c){
+    const {data,error}=await sb.from(c).select('id,data');
+    if(error) throw sbErr(error);
+    for(const s of (subs[c]||[])){ try{ s.cb(snap(data||[])); }catch(err){ console.error(err); } }
+  }
+  /* recarrega a coleção: depois de cada gravação e a cada evento em tempo real */
+  function recarregar(c){
+    clearTimeout(timers[c]);
+    timers[c]=setTimeout(()=>{ puxar(c).catch(e=>{ console.error(c,e); for(const s of (subs[c]||[])) if(s.err) s.err(e); }); },150);
+  }
+  const docRef=(c,id)=>({
+    set:async d=>{ const {error}=await sb.from(c).upsert({id,data:d}); if(error) throw sbErr(error); recarregar(c); },
+    update:async d=>{ const {error}=await sb.rpc('doc_merge',{tabela:c,doc_id:id,patch:d}); if(error) throw sbErr(error); recarregar(c); },
+    delete:async ()=>{ const {error}=await sb.from(c).delete().eq('id',id); if(error) throw sbErr(error); recarregar(c); },
+  });
+  /* tempo real: o técnico acompanha da arquibancada o jogo que outro está marcando */
+  const canal=sb.channel('tcc-competicao');
+  for(const c of COLS) canal.on('postgres_changes',{event:'*',schema:'public',table:c},()=>recarregar(c));
+  canal.subscribe();
+  return {
+    doc:path=>{ const seg=String(path).split('/'); return docRef(seg.slice(0,-1).join('/'),seg[seg.length-1]); },
+    collection:c=>({
+      add:async d=>{ const {data,error}=await sb.from(c).insert({data:d}).select('id').single(); if(error) throw sbErr(error); recarregar(c); return {id:data.id}; },
+      doc:id=>docRef(c,id),
+      onSnapshot:(cb,err)=>{ (subs[c]=subs[c]||[]).push({cb,err}); recarregar(c); return ()=>{ subs[c]=(subs[c]||[]).filter(x=>x.cb!==cb); }; },
+    }),
+  };
+}
+
+/* ---------- 3) localStorage (modo de teste) ---------- */
 function localDB(){
   let mem={}; let persist=true;
   try{ mem=JSON.parse(localStorage.getItem('tccdb')||'{}'); }catch(e){ persist=false; }
@@ -1351,6 +1450,8 @@ function localDB(){
     }),
   };
 }
+
+/* ================= papéis ================= */
 function applyRole(){
   const ath = S.role==='athlete';
   document.querySelectorAll('#nav button').forEach(b=>{ b.hidden = ath && b.dataset.t!=='jogos'; });
@@ -1360,30 +1461,88 @@ function applyRole(){
     document.querySelectorAll('main section').forEach(x=>x.hidden = x.id!=='v-jogos');
   }
 }
-(async()=>{
-  try{ render(); }catch(e){ console.error(e); }
-  try{ S.db = (typeof claude!=='undefined') ? await claude.use('db') : null; }catch(e){ S.db=null; }
-  if(!S.db){
-    // fora do claude.ai (ex.: GitHub Pages) → modo local de teste, dados só neste navegador
-    S.db=localDB(); S.local=true; S.role='coach';
-    const off=$('#offline');
-    off.textContent='Modo local de teste — os dados ficam salvos apenas neste navegador. A versão oficial do clube (link do claude.ai) usa o banco compartilhado da equipe.';
-    off.hidden=false;
-  } else {
-    $('#st').classList.add('on');
-    // papel do usuário: escrita de teste num caminho só de treinador; atleta (nível "pode ver") é recusado pelo banco
-    try{ await S.db.doc('probe/whoami').set({ts:Date.now()}); S.role='coach'; }
-    catch(e){ S.role = (e&&e.code)==='invalid_argument' ? 'athlete' : 'coach'; }
-  }
+
+/* ================= boot ================= */
+function bannerLocal(txt){ const off=$('#offline'); off.textContent=txt; off.hidden=false; }
+function ligarColecoes(){
   applyRole();
-  for(const name of ['atletas','avaliacoes','metas','torneios','jogos','relatorios']){
+  for(const name of COLS){
     S.db.collection(name).onSnapshot(snap=>{
       S[name]=snap.docs.filter(d=>d.exists).map(d=>({id:d.id,...d.data()}));
       try{ render(); }catch(e){ console.error(e); }
     },err=>{ console.error(name,err); });
   }
   try{ render(); }catch(e){ console.error(e); }
+}
+function mostrarLogin(){
+  $('#login').hidden=false; document.body.classList.add('trancado');
+  setTimeout(()=>{ try{ $('#lgMail').focus(); }catch(e){} },50);
+}
+async function entrarNoClube(){
+  S.db=supabaseDB(S.sb);
+  const {data:{user}}=await S.sb.auth.getUser();
+  let papel='atleta', nome='';
+  try{
+    const {data}=await S.sb.from('perfis').select('papel,nome').eq('id',user.id).maybeSingle();
+    if(data){ papel=data.papel||'atleta'; nome=data.nome||''; }
+  }catch(e){ console.error(e); }
+  S.role = papel==='treinador' ? 'coach' : 'athlete';
+  $('#login').hidden=true; document.body.classList.remove('trancado');
+  $('#st').classList.add('on');
+  $('#st').title='Banco do clube · '+(nome||user.email)+' · '+papel;
+  const sair=$('#sair'); sair.hidden=false;
+  sair.onclick=async()=>{ try{ await S.sb.auth.signOut(); }catch(e){} location.reload(); };
+  ligarColecoes();
+}
+(async()=>{
+  try{ render(); }catch(e){ console.error(e); }
+
+  if(sbConfigurado()){
+    try{
+      await garantirLibSupabase();
+      const c=sbCfg();
+      S.sb=window.supabase.createClient(c.url,c.key);
+      $('#loginForm').onsubmit=async ev=>{
+        ev.preventDefault();
+        const b=$('#lgBtn'), err=$('#lgErr');
+        err.textContent=''; b.disabled=true; b.textContent='Entrando…';
+        let error=null;
+        try{ ({error}=await S.sb.auth.signInWithPassword({email:$('#lgMail').value.trim(),password:$('#lgPass').value})); }
+        catch(e){ error=e; }
+        b.disabled=false; b.textContent='Entrar';
+        if(error){
+          const m=String(error.message||'');
+          err.textContent = /invalid login|invalid credentials/i.test(m) ? 'E-mail ou senha incorretos.'
+            : /not confirmed/i.test(m) ? 'E-mail ainda não confirmado — abra o link que o Supabase enviou.'
+            : /failed to fetch|network/i.test(m) ? 'Sem internet ou banco fora do ar. Tente de novo.'
+            : 'Não consegui entrar: '+m;
+          return;
+        }
+        try{ await entrarNoClube(); }catch(e){ err.textContent=errMsg(e); }
+      };
+      const {data:{session}}=await S.sb.auth.getSession();
+      if(session) await entrarNoClube(); else mostrarLogin();
+      return;
+    }catch(e){
+      console.error(e);
+      bannerLocal('Não consegui falar com o banco do clube agora — o app abriu em modo local de teste e o que for lançado fica só neste aparelho. Confira a conexão e recarregue a página.');
+    }
+  }
+
+  /* sem Supabase configurado: capability do claude.ai, se houver */
+  try{ S.db = (typeof claude!=='undefined') ? await claude.use('db') : null; }catch(e){ S.db=null; }
+  if(S.db){
+    $('#st').classList.add('on');
+    /* papel do usuário: escrita de teste num caminho só de treinador; atleta (nível "pode ver") é recusado pelo banco */
+    try{ await S.db.doc('probe/whoami').set({ts:Date.now()}); S.role='coach'; }
+    catch(e){ S.role = (e&&e.code)==='invalid_argument' ? 'athlete' : 'coach'; }
+  } else {
+    S.db=localDB(); S.local=true; S.role='coach';
+    if($('#offline').hidden) bannerLocal('Modo local de teste — os dados ficam salvos apenas neste navegador. Para ligar o banco compartilhado da equipe, preencha o config.js (passo a passo em docs/SUPABASE.md).');
+  }
+  ligarColecoes();
 })();
+
 </script>
 
 </body></html>

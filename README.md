@@ -25,9 +25,17 @@ O trimestre exibido é escolhido pelas setas `‹ ›` no topo — todo o sistem
 
 ## Banco de dados
 
-Sem configuração, o app roda em **modo local de teste**: os dados ficam salvos
-só no navegador de quem abriu. Para o banco compartilhado da equipe, veja
-[`docs/SUPABASE.md`](docs/SUPABASE.md).
+O app fala com o banco por uma interface única — `collection().add / doc().set /
+update / delete / onSnapshot` — com três implementações escolhidas na abertura:
+
+1. **Supabase** (Postgres gratuito) — o banco compartilhado do clube. Liga
+   sozinho quando o [`config.js`](config.js) está preenchido: aí o app pede
+   e-mail e senha, e o próprio banco decide quem pode o quê. Passo a passo para
+   ligar: [`docs/SUPABASE.md`](docs/SUPABASE.md). Estrutura e regras de acesso:
+   [`supabase/schema.sql`](supabase/schema.sql).
+2. **`claude.use('db')`** — quando a página é aberta como artifact no claude.ai.
+3. **`localStorage`** — modo local de teste: sem configuração nenhuma o app
+   abre e funciona, mas os dados ficam só no navegador de quem abriu.
 
 ## Trio técnico
 
