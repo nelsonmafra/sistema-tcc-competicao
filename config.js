@@ -13,6 +13,6 @@
    depois que a pessoa entra com e-mail e senha.
    --------------------------------------------------------------------- */
 window.TCC_CONFIG = {
-  SUPABASE_URL: "https://cljgzoumqoehsxofcedx.supabase.co",
-  SUPABASE_ANON_KEY: "sb_publishable_WoiRq6Jo3dI6PhNPoZrehQ_x6Y-6Qa4"
+  SUPABASE_URL: "",
+  SUPABASE_ANON_KEY: ""
 };
