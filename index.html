@@ -51,8 +51,15 @@ h1,h2,h3,.num{font-family:var(--font)}
 header{position:sticky;top:0;z-index:20;background:var(--surface);border-bottom:1px solid var(--line);padding:10px 16px;display:flex;align-items:center;gap:10px}
 .brand{font-family:var(--font);font-weight:800;font-size:17px;letter-spacing:.2px}
 .brand b{color:var(--clay)}
-.status{width:8px;height:8px;border-radius:50%;background:var(--warn);flex:none}
-.status.on{background:var(--ok)}
+.status{width:24px;height:24px;border:0;background:none;padding:0;margin:0 -6px;flex:none;cursor:pointer;display:grid;place-items:center}
+.status::before{content:"";display:block;width:9px;height:9px;border-radius:50%;background:var(--warn)}
+.status.on::before{background:var(--ok)}
+.diag-l{display:flex;gap:9px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--line)}
+.diag-l:last-child{border-bottom:0}
+.diag-l b{font:800 14px var(--font);width:15px;text-align:center;flex:none;line-height:1.4}
+.diag-ok b{color:var(--ok)} .diag-warn b{color:var(--warn)} .diag-bad b{color:var(--bad)}
+.diag-t{font:600 13.5px var(--font)}
+.diag-l .mini{word-break:break-word}
 .tri-nav{margin-left:auto;display:flex;align-items:center;gap:4px}
 .tri-nav button{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;width:30px;height:30px;font-size:15px;cursor:pointer}
 .tri-label{font-family:var(--font);font-weight:700;font-size:14px;min-width:76px;text-align:center}
@@ -184,7 +191,7 @@ body.trancado{overflow:hidden}
 
 <header>
   <div class="brand">TCC <b>Competição</b></div>
-  <div class="status" id="st" title="Conexão com o banco"></div>
+  <button class="status" id="st" title="Conexão com o banco — toque para o diagnóstico" aria-label="Diagnóstico do banco"></button>
   <div class="tri-nav">
     <button id="triPrev" aria-label="Trimestre anterior">‹</button>
     <div class="tri-label" id="triLbl"></div>
@@ -261,6 +268,7 @@ function errMsg(e){
   if(c==='revoked') return 'Seu acesso mudou — recarregue a página.';
   if(c==='forbidden') return 'Seu perfil não tem permissão para esta ação. Fale com o treinador do programa.';
   if(c==='unauthenticated') return 'Sua sessão expirou — recarregue a página e entre de novo.';
+  if(e&&e.detalhe) return 'Falha ao falar com o banco ('+e.detalhe+'). Toque na bolinha ao lado do título para o diagnóstico.';
   return 'Falha temporária de conexão. Tente novamente em alguns segundos.';
 }
 /* ================= gravação ================= */
@@ -1356,6 +1364,7 @@ window.switchTab=function(t){
   render();
 };
 document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>switchTab(b.dataset.t));
+$('#st').onclick=()=>{ try{ abrirDiagnostico(); }catch(e){ toast('Diagnóstico indisponível.',true); } };
 window.goDossie=function(id){ S.relAtleta=id; S.relView='atleta'; switchTab('relatorios'); };
 $('#triPrev').onclick=()=>{S.tri=triShift(S.tri,-1);render()};
 $('#triNext').onclick=()=>{S.tri=triShift(S.tri,1);render()};
@@ -1410,6 +1419,7 @@ async function garantirLibSupabase(){
 function sbErr(e){
   const err=new Error((e&&e.message)||'erro no banco');
   const c=String((e&&e.code)||''), st=(e&&e.status)||0;
+  err.detalhe=[c,(e&&e.message)||''].filter(Boolean).join(' ').slice(0,140);
   if(c==='42501'||c==='PGRST301'||st===401||st===403) err.code='forbidden';
   else if(c==='PGRST116'||c.indexOf('23')===0||c.indexOf('22')===0) err.code='invalid_argument';
   else err.code='unavailable';
@@ -1469,6 +1479,91 @@ function localDB(){
   };
 }
 
+/* ================= diagnóstico do banco =================
+   Uma tela que testa, em ordem, tudo que precisa funcionar e diz em português
+   o que falhou. É o que aparece ao tocar na bolinha ao lado do título. */
+window.abrirDiagnostico=async function(){
+  const L=[]; const add=(s,t,d)=>L.push({s,t,d});
+  const dlg=$('#dlg');
+  const desenha=()=>{
+    $('#dlgInner').innerHTML='<div class="dlg-h"><h3>Diagnóstico do banco</h3><button id="dlgX" aria-label="Fechar">✕</button></div>'
+      +'<div class="dlg-b">'+L.map(x=>'<div class="diag-l diag-'+x.s+'"><b>'+(x.s==='ok'?'✓':x.s==='warn'?'!':'✕')+'</b>'
+        +'<div><div class="diag-t">'+esc(x.t)+'</div>'+(x.d?'<div class="mini">'+esc(x.d)+'</div>':'')+'</div></div>').join('')
+      +'<div class="mini" style="margin-top:10px">Se algo estiver com ✕, toque em <b>copiar</b> e me mande o texto.</div></div>'
+      +'<div class="dlg-f"><button class="btn ghost" id="diagCopy">copiar</button><button class="btn" id="dlgCancel">Fechar</button></div>';
+    $('#dlgX').onclick=$('#dlgCancel').onclick=()=>dlg.close();
+    $('#diagCopy').onclick=async()=>{
+      const txt=L.map(x=>(x.s==='ok'?'OK   ':x.s==='warn'?'AVISO':'ERRO ')+' '+x.t+(x.d?' — '+x.d:'')).join('\n');
+      try{ await navigator.clipboard.writeText(txt); toast('Copiado ✓'); }
+      catch(e){ toast('Não consegui copiar — tire um print da tela.',true); }
+    };
+  };
+  const detalhe=e=>[e&&e.code,e&&e.message].filter(Boolean).join(' — ').slice(0,180)||'sem detalhe';
+  if(!dlg.open) dlg.showModal();
+  add('warn','Testando…',''); desenha();
+  L.length=0;
+
+  /* 1) configuração */
+  const c=sbCfg();
+  if(!sbConfigurado()){
+    add('bad','Configuração (config.js)', (c.url?'':'URL vazia. ')+((c.key||'').length>30?'':'Chave vazia ou curta. ')+'O app está em modo local de teste: os dados ficam só neste aparelho.');
+    desenha(); return;
+  }
+  add('ok','Configuração (config.js)', c.url);
+  desenha();
+
+  /* 2) biblioteca e cliente */
+  if(!S.sb){ add('bad','Conexão com o Supabase','a biblioteca não carregou (internet bloqueada? CDN fora do ar?) — recarregue a página'); desenha(); return; }
+  add('ok','Biblioteca do Supabase','carregada');
+  desenha();
+
+  /* 3) sessão */
+  let user=null, erroSessao=null;
+  try{ const r=await S.sb.auth.getUser(); erroSessao=r.error; user=r.data&&r.data.user; }catch(e){ erroSessao=e; }
+  if(!user){ add('bad','Sessão', erroSessao?detalhe(erroSessao):'ninguém logado — entre com e-mail e senha'); desenha(); return; }
+  add('ok','Sessão iniciada', user.email);
+  desenha();
+
+  /* 4) perfil e papel */
+  const rp=await S.sb.from('perfis').select('papel,nome').eq('id',user.id).maybeSingle();
+  if(rp.error) add('bad','Ler o seu perfil (tabela perfis)', detalhe(rp.error)+'  ·  provável falta de permissão: rode de novo o supabase/schema.sql');
+  else if(!rp.data) add('bad','Ler o seu perfil (tabela perfis)','seu usuário não tem linha em perfis — refaça o passo 3 do docs/SUPABASE.md');
+  else if(rp.data.papel==='treinador') add('ok','Seu papel no banco: treinador','acesso total');
+  else add('warn','Seu papel no banco: '+rp.data.papel,'atleta só vê a aba Jogos e não grava avaliações, metas nem torneios. Para virar treinador, passo 3b do guia.');
+  desenha();
+
+  /* 5) leitura de cada coleção */
+  for(const t of COLS){
+    const r=await S.sb.from(t).select('id').limit(1);
+    if(r.error) add('bad','Ler '+t, detalhe(r.error));
+    else add('ok','Ler '+t, 'respondeu');
+    desenha();
+  }
+
+  /* 6) gravação de teste (usa um registro invisível, e apaga em seguida) */
+  const w=await S.sb.from('relatorios').upsert({id:'__diagnostico__',data:{teste:true,ts:Date.now()}});
+  if(w.error) add('bad','Gravar (teste)', detalhe(w.error));
+  else{
+    add('ok','Gravar (teste)','gravou');
+    const d=await S.sb.from('relatorios').delete().eq('id','__diagnostico__');
+    add(d.error?'warn':'ok','Apagar o registro de teste', d.error?detalhe(d.error):'limpo');
+  }
+  desenha();
+
+  /* 7) tempo real */
+  await new Promise(res=>{
+    let fim=false;
+    const encerra=(s,t,d)=>{ if(fim)return; fim=true; add(s,t,d); try{S.sb.removeChannel(ch);}catch(e){} desenha(); res(); };
+    const ch=S.sb.channel('diag-'+Date.now());
+    ch.on('postgres_changes',{event:'*',schema:'public',table:'jogos'},()=>{});
+    ch.subscribe(st=>{
+      if(st==='SUBSCRIBED') encerra('ok','Tempo real','ligado — o técnico acompanha a partida de outro aparelho');
+      else if(st==='CHANNEL_ERROR'||st==='TIMED_OUT'||st==='CLOSED') encerra('warn','Tempo real',String(st)+' — o app funciona, mas as telas não se atualizam sozinhas entre aparelhos');
+    });
+    setTimeout(()=>encerra('warn','Tempo real','sem resposta em 8 segundos'),8000);
+  });
+};
+
 /* ================= papéis ================= */
 function applyRole(){
   const ath = S.role==='athlete';
@@ -1488,7 +1583,10 @@ function ligarColecoes(){
     S.db.collection(name).onSnapshot(snap=>{
       S[name]=snap.docs.filter(d=>d.exists).map(d=>({id:d.id,...d.data()}));
       try{ render(); }catch(e){ console.error(e); }
-    },err=>{ console.error(name,err); });
+    },err=>{
+      console.error(name,err);
+      if(!S.avisado){ S.avisado=true; toast('Não consegui ler "'+name+'" do banco. Toque na bolinha ao lado do título.',true); }
+    });
   }
   try{ render(); }catch(e){ console.error(e); }
 }
@@ -1498,12 +1596,17 @@ function mostrarLogin(){
 }
 async function entrarNoClube(){
   S.db=supabaseDB(S.sb);
-  const {data:{user}}=await S.sb.auth.getUser();
+  const ru=await S.sb.auth.getUser();
+  const user=ru&&ru.data&&ru.data.user;
+  if(!user){ const e=new Error('sem sessão'); e.code='unauthenticated'; throw e; }
   let papel='atleta', nome='';
-  try{
-    const {data}=await S.sb.from('perfis').select('papel,nome').eq('id',user.id).maybeSingle();
-    if(data){ papel=data.papel||'atleta'; nome=data.nome||''; }
-  }catch(e){ console.error(e); }
+  /* o Supabase devolve o erro DENTRO da resposta: se não olharmos, um treinador
+     entra rebaixado a atleta sem ninguém avisar. Por isso o aviso explícito. */
+  const rp=await S.sb.from('perfis').select('papel,nome').eq('id',user.id).maybeSingle();
+  if(rp.error||!rp.data){
+    console.error('perfis',rp.error);
+    bannerLocal('Entrei no banco, mas não consegui ler o seu perfil'+(rp.error?' ('+[rp.error.code,rp.error.message].filter(Boolean).join(' ')+')':' — seu usuário não tem linha na tabela perfis')+'. Por segurança você está com acesso de ATLETA. Toque na bolinha ao lado do título para o diagnóstico.');
+  } else { papel=rp.data.papel||'atleta'; nome=rp.data.nome||''; }
   S.role = papel==='treinador' ? 'coach' : 'athlete';
   $('#login').hidden=true; document.body.classList.remove('trancado');
   $('#st').classList.add('on');

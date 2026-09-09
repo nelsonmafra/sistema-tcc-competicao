@@ -51,6 +51,13 @@ returns text language sql stable security definer set search_path = public as $$
   select coalesce((select p.papel from public.perfis p where p.id = auth.uid()), 'atleta');
 $$;
 
+-- permissão explícita: sem isto, ler a própria linha de perfis pode ser
+-- recusado e o app entra com acesso de atleta sem avisar.
+grant usage on schema public to authenticated;
+grant select on public.perfis to authenticated;
+grant update (nome) on public.perfis to authenticated;
+revoke all on public.perfis from anon;
+
 drop policy if exists "perfis: cada um ve o seu" on public.perfis;
 create policy "perfis: cada um ve o seu" on public.perfis
   for select to authenticated using (id = auth.uid());
@@ -136,6 +143,7 @@ begin
 end $$;
 
 grant execute on function public.doc_merge(text, text, jsonb) to authenticated;
+grant execute on function public.papel() to authenticated;
 
 
 -- 5) TEMPO REAL --------------------------------------------------------

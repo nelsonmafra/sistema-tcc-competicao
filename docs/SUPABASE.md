@@ -140,6 +140,19 @@ app, o Postgres recusa. As regras estão no fim do `supabase/schema.sql`.
 
 ---
 
+## A bolinha ao lado do título
+
+No topo do app, ao lado de "TCC Competição", há uma bolinha:
+**verde** = conectado ao banco, **amarela** = não conectado.
+
+**Toque nela** para abrir o *Diagnóstico do banco*. Ele testa, em ordem:
+configuração, biblioteca, sua sessão, o seu papel (treinador/atleta), a leitura
+de cada uma das 6 tabelas, uma gravação de teste e o tempo real — e mostra em
+português o que passou (✓) e o que falhou (✕), com o código do erro.
+
+Quando algo der errado, é daí que sai a resposta: toque em **copiar** e mande o
+texto. Não precisa entender o conteúdo.
+
 ## Se der problema
 
 | O que aparece | O que fazer |
@@ -147,7 +160,9 @@ app, o Postgres recusa. As regras estão no fim do `supabase/schema.sql`.
 | "E-mail ou senha incorretos" | Confira o e-mail. Para trocar a senha: Authentication → Users → três pontinhos → *Reset password*. |
 | "E-mail ainda não confirmado" | O usuário foi criado sem `Auto Confirm User`. Apague e crie de novo com a opção marcada. |
 | "Seu perfil não tem permissão para esta ação" | A pessoa está como atleta. Rode o SQL do Passo 3.3 com o e-mail dela. |
-| A tela de login não aparece | O `config.js` está vazio ou com um valor errado. Confira se a URL começa com `https://` e se a chave é a **anon**, não a `service_role`. |
+| A tela de login não aparece | O `config.js` está vazio ou com um valor errado. Confira se a URL começa com `https://` e se a chave é a **anon**/publishable, não a `service_role`. |
+| "não consegui ler o seu perfil" e você entra como atleta | Falta permissão na tabela `perfis`. Cole o `supabase/schema.sql` de novo no SQL Editor e rode — ele pode ser executado quantas vezes for preciso. |
+| `42501 permission denied` em qualquer linha do diagnóstico | Mesma coisa: rode o `supabase/schema.sql` de novo. |
 | Some tudo depois de trocar de aparelho | Você ainda está em modo local de teste — os dados do teste ficam só no navegador antigo e não sobem para o banco. |
 
 ## E os dados que eu já lancei no modo de teste?
