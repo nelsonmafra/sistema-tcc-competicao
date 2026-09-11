@@ -177,6 +177,30 @@ a.link{color:var(--clay)}
 button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--navy);outline-offset:1px}
 @media(min-width:720px){ nav{position:sticky;top:52px;bottom:auto;border-top:0;border-bottom:1px solid var(--line);justify-content:flex-start;gap:4px;padding:4px 12px} nav button{flex:none;flex-direction:row;font-size:13px;padding:8px 12px} body{padding-bottom:20px} }
 @media (prefers-reduced-motion: reduce){ *{transition:none!important;animation:none!important} }
+/* resumo da partida: quadrinhos de números e a leitura do treinador */
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(102px,1fr));gap:8px;margin:10px 0}
+.tile{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:10px 8px;text-align:center}
+.tile .tv-num{font:800 21px var(--font);font-variant-numeric:tabular-nums;line-height:1.1}
+.tile .tl{font:600 10px var(--font);color:var(--muted);text-transform:uppercase;letter-spacing:.3px;margin-top:4px}
+.dica{display:flex;gap:9px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--line)}
+.dica:last-child{border-bottom:0}
+.dica .pin{width:9px;height:9px;border-radius:50%;margin-top:5px;flex:none;background:var(--muted)}
+.dica-ok .pin{background:var(--ok)} .dica-warn .pin{background:var(--warn)} .dica-bad .pin{background:var(--bad)}
+.dica-t{font:700 13.5px var(--font)}
+.dica-v{font:800 13.5px var(--font);font-variant-numeric:tabular-nums;color:var(--muted)}
+.dica-ok .dica-v{color:var(--ok)} .dica-warn .dica-v{color:var(--warn)} .dica-bad .dica-v{color:var(--bad)}
+/* virada de set */
+.quebra-h{font:800 19px var(--font);text-align:center;margin-top:14px}
+.quebra-p{font:800 26px var(--font);text-align:center;color:var(--clay);margin-top:2px}
+.quebra-s{text-align:center;color:var(--muted);font-size:12.5px;margin-top:2px}
+body.tv .quebra{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;justify-content:center;padding:3vh 3vw}
+body.tv .quebra-h{font-size:clamp(20px,3.6vw,46px)}
+body.tv .quebra-p{font-size:clamp(30px,7vw,96px);margin-top:1vh}
+body.tv .quebra-s{font-size:clamp(13px,1.8vw,26px)}
+body.tv .tiles{grid-template-columns:repeat(3,1fr);gap:1.4vw;margin:3vh 0 1vh}
+body.tv .tile{border-radius:1.2vw;padding:2.2vh 1vw}
+body.tv .tile .tv-num{font-size:clamp(26px,5.5vw,78px)}
+body.tv .tile .tl{font-size:clamp(9px,1.35vw,19px)}
 /* acompanhar ao vivo + placar de TV */
 .aovivo{display:inline-flex;align-items:center;gap:6px;font:700 11px var(--font);color:var(--bad);text-transform:uppercase;letter-spacing:.5px}
 .aovivo i{width:8px;height:8px;border-radius:50%;background:var(--bad);animation:pulsa 1.4s infinite}
@@ -263,8 +287,11 @@ const S = { atletas:[], avaliacoes:[], metas:[], torneios:[], jogos:[], relatori
 const DIM_AV = [['tec','Técnica'],['tat','Tática'],['fis','Física'],['ati','Atitude'],['comp','Competit.']];
 const CRITERIOS = ['Domínio técnico dos fundamentos da etapa','Sustenta o jogo taticamente em partida','Rotina de treino com autonomia','Comportamento competitivo adequado','Volume/frequência compatíveis com a próxima etapa'];
 const BOLAS = ['Vermelha','Laranja','Verde','Amarela'];
-const QUADRAS = ['Saibro','Rápida (dura)','Grama sintética','Areia','Outra'];
-const TIPOS_TORNEIO = ['Interno TCC','Clubes da região','Federado FPT','Nacional CBT','COSAT / ITF','Kids'];
+const QUADRAS = ['Saibro','Rápida (dura)','Rápida coberta','Grama','Grama sintética','Carpete','Sintético','Areia','Outra'];
+/* nível do torneio — do amistoso ao Grand Slam, passando pelo que o TCC joga de fato */
+const TIPOS_TORNEIO = ['Amistoso','Jogo-treino','Interno TCC','Torneio de clube','Kids (Play & Stay)','Regional','Estadual (FPT)','Nacional (CBT)','COSAT','ITF Juniors','ITF World Tour','ATP Challenger','ATP 250','ATP 500','ATP Masters 1000','ATP Finals','WTA 125','WTA 250','WTA 500','WTA 1000','WTA Finals','Grand Slam'];
+const RODADAS = ['Qualificatório','Primeira rodada','Segunda rodada','Terceira rodada','Oitavas de final','Quartas de final','Semifinal','Final','Fase de grupos','Repescagem','Amistoso'];
+const CATEGORIAS = ['Sub-10','Sub-12','Sub-14','Sub-16','Sub-18','Adulto','1ª classe','2ª classe','3ª classe','4ª classe','Sênior 35+','Sênior 45+','Sênior 55+'];
 const selOpts=(arr,selv)=>'<option value="">—</option>'+arr.map(o=>'<option '+(o===selv?'selected':'')+'>'+o+'</option>').join('');
 const $ = s=>document.querySelector(s);
 const esc = s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -320,6 +347,33 @@ function mediaNotas(v){ if(!v)return null; const ns=DIM_AV.map(([k])=>v.notas?.[
 const jogosDoTri = tri=>S.jogos.filter(j=>j.finalizado!==false&&triOfStr(j.data)===tri);
 const tornDoTri  = tri=>S.torneios.filter(t=>triOfStr(t.data)===tri);
 function fmt(n,d=1){ return n==null?'—':(+n).toFixed(d).replace('.',','); }
+/* os campos de contexto da partida — iguais no "+ Resultado" e no "▶ Ao vivo" */
+function camposPartida(j){
+  j=j||{};
+  return '<div class="grid2"><div><label>Adversário</label><input id="fAdv" value="'+esc(j.adversario||'')+'"></div>'
+    +'<div><label>Clube do adversário</label><input id="fClube" placeholder="opcional" value="'+esc(j.clubeAdv||'')+'"></div></div>'
+    +'<div class="grid2"><div><label>Categoria</label><select id="fCatJ">'+selOpts(CATEGORIAS,j.categoria)+'</select></div>'
+    +'<div><label>Data</label><input id="fData" type="date" value="'+esc(j.data||new Date().toISOString().slice(0,10))+'"></div></div>'
+    +'<label>Local / clube-sede</label><input id="fLocal" placeholder="ex.: Tênis Clube de Campinas" value="'+esc(j.local||'')+'">'
+    +'<label>Torneio</label><input id="fTorneio" placeholder="ex.: FPT 3ª classe — Etapa Campinas" value="'+esc(j.torneio||'')+'">'
+    +'<div class="grid2"><div><label>Rodada</label><select id="fRodada">'+selOpts(RODADAS,j.rodada)+'</select></div>'
+    +'<div><label>Piso</label><select id="fQuadra">'+selOpts(QUADRAS,j.quadra||'Saibro')+'</select></div></div>'
+    +'<label>Nível do torneio</label><select id="fTipoT">'+selOpts(TIPOS_TORNEIO,j.tipoTorneio)+'</select>';
+}
+function lerCamposPartida(){
+  return { adversario:$('#fAdv').value.trim(), clubeAdv:$('#fClube').value.trim(),
+           categoria:$('#fCatJ').value, data:$('#fData').value, local:$('#fLocal').value.trim(),
+           torneio:$('#fTorneio').value.trim(), rodada:$('#fRodada').value,
+           quadra:$('#fQuadra').value, tipoTorneio:$('#fTipoT').value };
+}
+/* a categoria do atleta entra sozinha, se combinar com a lista */
+function autoCategoria(){
+  const sel=$('#fCatJ'); if(!sel||sel.value) return;
+  const a=atleta($('#fAtl').value); if(!a||!a.categoria) return;
+  const alvo=String(a.categoria).trim().toLowerCase().replace(/^sub\s*-?\s*/,'sub-');
+  const achou=CATEGORIAS.find(c=>c.toLowerCase()===alvo);
+  if(achou) sel.value=achou;
+}
 function selAtletas(sel,req=true){ return '<select id="'+sel+'" '+(req?'required':'')+'>'+ '<option value="">— selecione o atleta —</option>' + ativos().map(a=>'<option value="'+a.id+'">'+esc(a.nome)+' ('+esc(a.bola||a.categoria||'')+')</option>').join('')+'</select>'; }
 function segHtml(name,val){ return '<div class="seg" data-seg="'+name+'">'+[1,2,3,4,5].map(n=>'<button type="button" data-v="'+n+'" class="'+(val===n?'on':'')+'">'+n+'</button>').join('')+'</div>'; }
 function segWire(root){ root.querySelectorAll('[data-seg]').forEach(sg=>sg.querySelectorAll('button').forEach(b=>b.onclick=()=>{ sg.querySelectorAll('button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); })); }
@@ -788,6 +842,16 @@ function cmpRow(lbl,a,o,invert){
 window.repOpen=function(id){ S.repId=id; S.repSet=0; render(); };
 window.repClose=function(){ S.repId=null; render(); };
 window.repSet=function(i){ S.repSet=i; render(); };
+/* categoria, rodada, nível, piso e local — o contexto do jogo em uma linha */
+function ctxChips(j){
+  const c=[];
+  if(j.categoria) c.push('<span class="chip navy">'+esc(j.categoria)+'</span>');
+  if(j.rodada) c.push('<span class="chip ok">'+esc(j.rodada)+'</span>');
+  if(j.tipoTorneio) c.push('<span class="chip navy">'+esc(j.tipoTorneio)+'</span>');
+  if(j.quadra) c.push('<span class="chip clay">'+esc(j.quadra)+'</span>');
+  if(j.local) c.push('<span class="chip navy">'+esc(j.local)+'</span>');
+  return c.length?'<div class="row" style="margin-top:6px">'+c.join('')+'</div>':'';
+}
 function rReport(){
   if(S.repSet==null) S.repSet=0;
   const j=S.jogos.find(x=>x.id===S.repId);
@@ -804,7 +868,7 @@ function rReport(){
   h+='<div class="card"><div class="row"><h3>'+esc(nome)+' × '+esc(adv)+'</h3>'
     +(j.resultado==='V'?'<span class="chip ok">V</span>':j.resultado==='D'?'<span class="chip bad">D</span>':'<span class="chip warn">'+(j.finalizado===false?'em andamento':'interrompida')+'</span>')
     +'</div><div class="sub">'+esc(j.placar||placarStr(computeMatch(j.cfg||{},j.log||[])))+(j.torneio?' · '+esc(j.torneio):'')+(j.data?' · '+esc(j.data):'')+'</div>'
-    +((j.tipoTorneio||j.quadra)?'<div class="row" style="margin-top:6px">'+(j.tipoTorneio?'<span class="chip navy">'+esc(j.tipoTorneio)+'</span>':'')+(j.quadra?'<span class="chip clay">'+esc(j.quadra)+'</span>':'')+'</div>':'')+'</div>';
+    +ctxChips(j)+'</div>';
 
   /* resumo comparativo */
   h+='<div class="card"><h3>Resumo</h3><div class="rep-legend"><span><i style="background:var(--sA)"></i>'+n1+'</span><span><i style="background:var(--sO)"></i>'+n2+'</span></div>'
@@ -916,6 +980,7 @@ function rReport(){
 /* ---------- JOGOS ---------- */
 function rJogos(){
   if(S.repId){ rReport(); return; }
+  if(S.resumoId){ rResumo(); return; }
   if(S.liveId){ rLive(); return; }
   if(S.watchId){ rWatch(); return; }
   const andamento=S.jogos.filter(j=>j.finalizado===false).sort((a,b)=>b.ts-a.ts);
@@ -949,10 +1014,7 @@ function rJogos(){
 window.fJogo=function(){
   openDlg('Anotar jogo',
     '<label>Atleta</label>'+selAtletas('fAtl')
-    +'<div class="grid2"><div><label>Data</label><input id="fData" type="date" value="'+new Date().toISOString().slice(0,10)+'"></div>'
-    +'<div><label>Torneio</label><input id="fTorneio" placeholder="opcional"></div></div>'
-    +'<div class="grid2"><div><label>Tipo do torneio</label><select id="fTipoT">'+selOpts(TIPOS_TORNEIO)+'</select></div><div><label>Tipo de quadra</label><select id="fQuadra">'+selOpts(QUADRAS,'Saibro')+'</select></div></div>'
-    +'<div class="grid2"><div><label>Adversário</label><input id="fAdv"></div><div><label>Clube do adversário</label><input id="fClube" placeholder="opcional"></div></div>'
+    +camposPartida()
     +'<div class="grid2"><div><label>Placar</label><input id="fPlacar" placeholder="6/3 4/6 [10-7]"></div>'
     +'<div><label>Resultado</label><select id="fRes"><option value="V">Vitória</option><option value="D">Derrota</option></select></div></div>'
     +'<div class="grid2"><div><label>1º serviço dentro (%)</label><input id="fPsv" type="number" min="0" max="100"></div><div><label>Aces</label><input id="fAces" type="number" min="0"></div></div>'
@@ -960,8 +1022,9 @@ window.fJogo=function(){
     +'<div class="grid2"><div><label>Erros não forçados</label><input id="fEnf" type="number" min="0"></div><div><label>Anotado por</label><input id="fAnot" placeholder="seu nome"></div></div>',
     async()=>{ const aid=$('#fAtl').value; if(!aid){dlgErr('Selecione o atleta.');return false}
       const num=id=>{const v=$(id).value;return v===''?null:+v};
-      return save('jogos',{atletaId:aid,data:$('#fData').value,torneio:$('#fTorneio').value.trim(),tipoTorneio:$('#fTipoT').value,quadra:$('#fQuadra').value,adversario:$('#fAdv').value.trim(),clubeAdv:$('#fClube').value.trim(),placar:$('#fPlacar').value.trim(),resultado:$('#fRes').value,stats:{psv:num('#fPsv'),aces:num('#fAces'),df:num('#fDf'),win:num('#fWin'),enf:num('#fEnf')},anotador:$('#fAnot').value.trim()});
+      return save('jogos',{atletaId:aid,...lerCamposPartida(),placar:$('#fPlacar').value.trim(),resultado:$('#fRes').value,stats:{psv:num('#fPsv'),aces:num('#fAces'),df:num('#fDf'),win:num('#fWin'),enf:num('#fEnf')},anotador:$('#fAnot').value.trim()});
     });
+  $('#fAtl').onchange=autoCategoria;
 };
 
 /* ---------- RELATÓRIOS AUTOMÁTICOS ---------- */
@@ -1181,7 +1244,7 @@ function ensureXLSX(){
   return _xlsxLoading;
 }
 const _norm=t=>String(t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[*()%/º°]/g,' ').replace(/\s+/g,' ').trim();
-const HEAD_MAP=[[ 'atleta','atleta'],['data','data'],['tipo do torneio','tipoTorneio'],['tipo de quadra','quadra'],['torneio','torneio'],['adversario','adversario'],['clube','clubeAdv'],['placar','placar'],['resultado','resultado'],['1 servico','psv'],['1o servico','psv'],['servico','psv'],['psv','psv'],['aces','aces'],['duplas faltas','df'],['dupla falta','df'],['winners','win'],['winner','win'],['erros forcados','ef'],['erro forcado','ef'],['erros nao forcados','enf'],['erro nao forcado','enf'],['anotado','anotador']];
+const HEAD_MAP=[[ 'atleta','atleta'],['data','data'],['nivel do torneio','tipoTorneio'],['tipo do torneio','tipoTorneio'],['nivel','tipoTorneio'],['tipo de quadra','quadra'],['piso','quadra'],['categoria','categoria'],['rodada','rodada'],['local','local'],['torneio','torneio'],['adversario','adversario'],['clube','clubeAdv'],['placar','placar'],['resultado','resultado'],['1 servico','psv'],['1o servico','psv'],['servico','psv'],['psv','psv'],['aces','aces'],['duplas faltas','df'],['dupla falta','df'],['winners','win'],['winner','win'],['erros forcados','ef'],['erro forcado','ef'],['erros nao forcados','enf'],['erro nao forcado','enf'],['anotado','anotador']];
 function mapHeader(h){ const n=_norm(h); for(const [k,v] of HEAD_MAP){ if(n===k||n.startsWith(k)) return v; } return null; }
 function xlDate(v){
   if(v==null||v==='') return '';
@@ -1207,6 +1270,7 @@ function rowsToRecords(matrix){
     recs.push({
       atleta:String(o.atleta).trim(), data:xlDate(o.data), torneio:String(o.torneio||'').trim(),
       tipoTorneio:String(o.tipoTorneio||'').trim(), quadra:String(o.quadra||'').trim(),
+      categoria:String(o.categoria||'').trim(), rodada:String(o.rodada||'').trim(), local:String(o.local||'').trim(),
       adversario:String(o.adversario||'').trim(), clubeAdv:String(o.clubeAdv||'').trim(),
       placar:String(o.placar||'').trim(),
       resultado: res.startsWith('v')?'V':res.startsWith('d')?'D':'I',
@@ -1227,7 +1291,7 @@ async function importRecords(arr){
       const ref=await S.db.collection('atletas').add({nome,ativo:true,ts:Date.now()});
       aid=ref.id; S.atletas.push({id:aid,nome,ativo:true});
     }
-    await S.db.collection('jogos').add({atletaId:aid,data:r.data||'',torneio:r.torneio||'',tipoTorneio:r.tipoTorneio||'',quadra:r.quadra||r.clube||'',adversario:r.adversario||'',clubeAdv:r.clube||r.clubeAdv||'',placar:r.placar||'',resultado:r.resultado==='V'?'V':r.resultado==='D'?'D':'I',stats:r.stats||{},anotador:r.anotador||'importado',ts:Date.now()});
+    await S.db.collection('jogos').add({atletaId:aid,data:r.data||'',torneio:r.torneio||'',tipoTorneio:r.tipoTorneio||'',quadra:r.quadra||r.clube||'',categoria:r.categoria||'',rodada:r.rodada||'',local:r.local||'',adversario:r.adversario||'',clubeAdv:r.clube||r.clubeAdv||'',placar:r.placar||'',resultado:r.resultado==='V'?'V':r.resultado==='D'?'D':'I',stats:r.stats||{},anotador:r.anotador||'importado',ts:Date.now()});
     n++;
   }
   return n;
@@ -1272,9 +1336,7 @@ window.fImport=function(){
 window.fJogoLive=function(){
   openDlg('Nova partida ao vivo',
     '<label>Atleta</label>'+selAtletas('fAtl')
-    +'<div class="grid2"><div><label>Adversário</label><input id="fAdv" placeholder="nome"></div><div><label>Clube do adversário</label><input id="fClube" placeholder="opcional"></div></div>'
-    +'<div class="grid2"><div><label>Torneio</label><input id="fTorneio" placeholder="opcional"></div><div><label>Data</label><input id="fData" type="date" value="'+new Date().toISOString().slice(0,10)+'"></div></div>'
-    +'<div class="grid2"><div><label>Tipo do torneio</label><select id="fTipoT">'+selOpts(TIPOS_TORNEIO)+'</select></div><div><label>Tipo de quadra</label><select id="fQuadra">'+selOpts(QUADRAS,'Saibro')+'</select></div></div>'
+    +camposPartida()
     +'<label>Formato</label><select id="fFmt">'
       +'<option value="3-6-mtb">Melhor de 3 — match tiebreak no 3º (padrão juvenil)</option>'
       +'<option value="3-6">Melhor de 3 sets completos</option>'
@@ -1289,10 +1351,15 @@ window.fJogoLive=function(){
       const cfg={sets:+sets,games:+games,mtb:mtb==='mtb',noAd:$('#fNoAd').value==='1',srv:$('#fSrv').value};
       if(!S.db){dlgErr('Sem conexão com o banco.');return false}
       try{
-        const ref=await S.db.collection('jogos').add({atletaId:aid,data:$('#fData').value,torneio:$('#fTorneio').value.trim(),tipoTorneio:$('#fTipoT').value,quadra:$('#fQuadra').value,adversario:$('#fAdv').value.trim(),clubeAdv:$('#fClube').value.trim(),cfg,log:[],finalizado:false,criadoPor:S.uid||null,ts:Date.now()});
-        S.liveId=ref.id; S.tab='jogos'; render(); return true;
+        const body={atletaId:aid,...lerCamposPartida(),cfg,log:[],finalizado:false,criadoPor:S.uid||null,ts:Date.now()};
+        const ref=await S.db.collection('jogos').add(body);
+        /* entra na lista na hora: a confirmação do banco chega alguns instantes
+           depois, e sem isto a tela de marcação abriria sem achar a partida */
+        S.jogos=[...S.jogos.filter(x=>x.id!==ref.id),{id:ref.id,...body}];
+        S.liveId=ref.id; S.setBreak=null; S.tab='jogos'; render(); return true;
       }catch(e){ dlgErr(errMsg(e)); return false }
     },'Começar partida');
+  $('#fAtl').onchange=autoCategoria;
 };
 function liveDoc(){ return S.jogos.find(j=>j.id===S.liveId); }
 function semId(j){ const c={...j}; delete c.id; return c; }
@@ -1304,12 +1371,19 @@ window.livePoint=function(w){
 };
 window.liveOutcome=function(tag){
   const j=liveDoc(); if(!j||!S.pend) return;
-  j.log=[...(j.log||[]),{w:S.pend,tag}]; S.pend=null; render(); liveSave(j);
+  const antes=computeMatch(j.cfg,j.log||[]).sets.length;
+  j.log=[...(j.log||[]),{w:S.pend,tag}]; S.pend=null;
+  const dep=computeMatch(j.cfg,j.log);
+  /* fechou um set (e o jogo não acabou) → a tela do intervalo aparece sozinha.
+     Guardamos o tamanho do log: se ele mudar (novo ponto ou desfazer), some. */
+  if(dep.sets.length>antes && !dep.over) S.setBreak={i:dep.sets.length-1,log:j.log.length};
+  render(); liveSave(j);
 };
+window.liveVoltar=function(){ S.setBreak=null; render(); };
 window.livePendCancel=function(){ S.pend=null; render(); };
 window.liveUndo=function(){
   const j=liveDoc(); if(!j||!(j.log||[]).length) return;
-  S.pend=null; j.log=j.log.slice(0,-1); render(); liveSave(j);
+  S.pend=null; S.setBreak=null; j.log=j.log.slice(0,-1); render(); liveSave(j);
 };
 window.liveFinSheet=function(v){ S.finSheet=!!v; render(); };
 window.liveFinish=async function(forceRes){
@@ -1325,7 +1399,155 @@ window.liveFinish=async function(forceRes){
     toast('Partida salva ✓'); render(); }
   catch(e){ toast(errMsg(e),true); }
 };
-window.liveExit=function(){ S.liveId=null; S.pend=null; S.finSheet=false; render(); };
+window.liveExit=function(){ S.liveId=null; S.pend=null; S.finSheet=false; S.setBreak=null; render(); };
+/* ================= RESUMO DA PARTIDA =================
+   O mesmo motor de números serve para três momentos: o treinador olhando no
+   meio do jogo, a virada de set (que aparece sozinha) e o fim da partida.
+   Tudo sai do log de pontos — nada é digitado duas vezes. */
+function numeros(tp){
+  const c=(w,t)=>tp.filter(p=>p.w===w&&p.tag===t).length;
+  const lado=(fA,fO)=>{ const a=tp.filter(fA), o=tp.filter(fO);
+    return {aG:a.filter(p=>p.w==='A').length,aT:a.length,oG:o.filter(p=>p.w==='O').length,oT:o.length}; };
+  const sq=tp.filter(p=>p.srv==='A'), dv=tp.filter(p=>p.srv==='O');
+  return { tp,
+    ptsA:tp.filter(p=>p.w==='A').length, ptsO:tp.filter(p=>p.w==='O').length,
+    winA:c('A','win'), winO:c('O','win'), aceA:c('A','ace'), aceO:c('O','ace'),
+    /* erro do atleta = ponto que o adversário ganhou com aquela marca */
+    enfA:c('O','enf'), enfO:c('A','enf'), efA:c('O','ef'), efO:c('A','ef'),
+    dfA:c('O','df'), dfO:c('A','df'),
+    deuce:lado(p=>p.deuce,p=>p.deuce), gp:lado(p=>p.gpA,p=>p.gpO),
+    bp:lado(p=>p.bpA,p=>p.bpO), sp:lado(p=>p.spA,p=>p.spO),
+    sqG:sq.filter(p=>p.w==='A').length, sqT:sq.length,
+    dvG:dv.filter(p=>p.w==='A').length, dvT:dv.length };
+}
+function resumoDados(j){
+  const an=analyzeMatch(j.cfg||{}, j.log||[]);
+  return Object.assign({an}, numeros(an.setPts.flat()));
+}
+const pctN=(g,t)=>t?Math.round(100*g/t):null;
+
+/* leitura em linguagem de treinador: o número e o que fazer com ele */
+function dicasPartida(d){
+  const L=[], add=(s,t,v,x)=>L.push({s,t,v,d:x});
+  const sq=pctN(d.sqG,d.sqT), dv=pctN(d.dvG,d.dvT);
+  if(d.sqT>=8) add(sq>=65?'ok':sq>=55?'warn':'bad','Pontos no próprio saque',sq+'% ('+d.sqG+'/'+d.sqT+')',
+    sq>=65?'O saque está sustentando o jogo — manter o padrão.'
+    :sq>=55?'Dá para apertar: mais 1º serviço dentro e sair jogando com o forehand.'
+    :'O saque não está segurando. Prioridade: colocar o 1º serviço, mesmo tirando velocidade.');
+  if(d.dvT>=8) add(dv>=40?'ok':dv>=28?'warn':'bad','Pontos na devolução',dv+'% ('+d.dvG+'/'+d.dvT+')',
+    dv>=40?'Está pressionando o saque dele — continuar assim.'
+    :dv>=28?'Devolver mais profundo, para ele não atacar já no primeiro golpe.'
+    :'Não está entrando no jogo na devolução. Recuar um passo e priorizar colocar a bola dentro.');
+  if(d.bp.aT) add(d.bp.aG/d.bp.aT>=0.4?'ok':'bad','Break points convertidos',d.bp.aG+' de '+d.bp.aT,
+    d.bp.aG/d.bp.aT>=0.4?'Boa conversão nos momentos de quebrar.'
+    :'Está criando e não fechando. No break point, jogar percentual: bola alta no meio e esperar o erro.');
+  if(d.bp.oT){ const salvos=d.bp.oT-d.bp.oG;
+    add(salvos/d.bp.oT>=0.5?'ok':'warn','Break points salvos',salvos+' de '+d.bp.oT,
+      salvos/d.bp.oT>=0.5?'Está segurando bem a pressão no próprio saque.'
+      :'Perdendo o saque nos momentos decisivos — no break point contra, 1º serviço com margem.'); }
+  const saldo=d.winA-d.enfA;
+  if(d.winA+d.enfA>=4) add(saldo>=0?'ok':saldo>=-5?'warn':'bad','Winners × erros não forçados',d.winA+' × '+d.enfA,
+    saldo>=0?'Saldo positivo: está acertando mais do que errando.'
+    :saldo>=-5?'Saldo levemente negativo. Pedir margem: bola mais alta sobre a rede.'
+    :'Está errando muito mais do que acertando. Trocar três bolas a mais antes de tentar o ataque.');
+  if(d.dfA>=3) add('bad','Duplas faltas',String(d.dfA),'Segurar o 2º saque: mais efeito, menos velocidade, mais altura sobre a rede.');
+  if(d.deuce.aT>=4){ const p=pctN(d.deuce.aG,d.deuce.aT);
+    add(p>=50?'ok':'warn','Pontos em deuce',p+'% ('+d.deuce.aG+'/'+d.deuce.aT+')',
+      p>=50?'Bem nos pontos longos do game.'
+      :'Perdendo os games apertados — combinar um padrão fixo para jogar no deuce.'); }
+  const ult=d.tp.slice(-8);
+  if(ult.length===8){ const g=ult.filter(p=>p.w==='A').length;
+    add(g>=5?'ok':g<=3?'bad':'warn','Momento (últimos 8 pontos)',g+' de 8',
+      g>=5?'Está por cima agora — manter o ritmo entre os pontos.'
+      :g<=3?'Momento contra. Quebrar o ritmo: respirar, andar devagar, usar a toalha.'
+      :'Equilibrado neste momento.'); }
+  return L;
+}
+function tilesHtml(d){
+  const t=(v,l)=>'<div class="tile"><div class="tv-num">'+v+'</div><div class="tl">'+esc(l)+'</div></div>';
+  const sq=pctN(d.sqG,d.sqT);
+  return '<div class="tiles">'
+    +t(d.ptsA+'–'+d.ptsO,'Pontos')
+    +t(d.winA+'–'+d.winO,'Winners')
+    +t(d.enfA+'–'+d.enfO,'Erros n/ forçados')
+    +t(d.aceA+'–'+d.aceO,'Aces')
+    +t(d.dfA+'–'+d.dfO,'Duplas faltas')
+    +t(sq==null?'—':sq+'%','Pontos no saque')
+    +'</div>';
+}
+function dicasHtml(L){
+  if(!L.length) return '<div class="mini">Ainda são poucos pontos para uma leitura confiável.</div>';
+  return L.map(x=>'<div class="dica dica-'+x.s+'"><span class="pin"></span><div style="flex:1;min-width:0">'
+    +'<div class="row" style="gap:6px"><span class="dica-t">'+esc(x.t)+'</span><span style="margin-left:auto"></span><span class="dica-v">'+esc(x.v)+'</span></div>'
+    +'<div class="mini">'+esc(x.d)+'</div></div></div>').join('');
+}
+function porSetHtml(an,n1){
+  if(!an.setPts.length) return '';
+  let h='<div class="card"><h3>Set a set</h3><div class="scroll"><table class="tbl">'
+    +'<tr><th>Set</th><th>Placar</th><th>Pontos</th><th>Win</th><th>ENF</th><th>BP</th></tr>';
+  an.setPts.forEach((pts,i)=>{
+    if(!pts.length) return;
+    const sc=an.setScores[i];
+    const placar=sc?(sc.mtb?('['+sc.tbA+'-'+sc.tbO+']'):(sc.gA+'/'+sc.gO)):'em andamento';
+    const n=numeros(pts);
+    const bpT=pts.filter(p=>p.bpA).length, bpG=pts.filter(p=>p.bpA&&p.w==='A').length;
+    h+='<tr><td>'+(i+1)+'</td><td>'+esc(placar)+'</td><td>'+n.ptsA+'–'+n.ptsO+'</td><td>'+n.winA+'</td><td>'+n.enfA+'</td><td>'+bpG+'/'+bpT+'</td></tr>';
+  });
+  return h+'</table></div><div class="mini">Win, ENF e BP na perspectiva de '+esc(n1)+'.</div></div>';
+}
+function pressaoHtml(d,n1,n2){
+  return '<div class="card"><h3>Sob pressão</h3><div class="mini" style="margin-bottom:6px">% dos pontos de pressão convertidos por cada lado.</div>'
+    +pctBar('Deuce',d.deuce.aG,d.deuce.aT,d.deuce.oG,d.deuce.oT,n1,n2)
+    +pctBar('Game points',d.gp.aG,d.gp.aT,d.gp.oG,d.gp.oT,n1,n2)
+    +pctBar('Break points',d.bp.aG,d.bp.aT,d.bp.oG,d.bp.oT,n1,n2)
+    +pctBar('Set points',d.sp.aG,d.sp.aT,d.sp.oG,d.sp.oT,n1,n2)
+    +'</div>';
+}
+
+/* ---------- tela cheia do resumo (botão "resumo" no jogo e no acompanhar) ---------- */
+window.resumoOpen=function(id){ S.resumoId=id; render(); };
+window.resumoClose=function(){ S.resumoId=null; render(); };
+function rResumo(){
+  const j=S.jogos.find(x=>x.id===S.resumoId);
+  if(!j||!(j.log||[]).length){ S.resumoId=null; rJogos(); return; }
+  const st=computeMatch(j.cfg||{},j.log||[]);
+  const d=resumoDados(j);
+  const nome=nomeA(j.atletaId), adv=j.adversario||'Adversário';
+  const n1=nome.split(' ')[0], n2=adv.split(' ')[0];
+  const rolando=j.finalizado===false;
+  let h='<div class="sec-head"><button class="btn sm ghost" onclick="resumoClose()">‹ voltar</button>'
+    +'<h2 style="font-size:16px">Resumo da partida</h2><span style="margin-left:auto"></span>'
+    +(rolando?'<span class="aovivo"><i></i>ao vivo</span>':'')+'</div>';
+  h+=placarHtml(j,st);
+  h+='<div class="card"><h3>Números</h3><div class="mini">'+esc(n1)+' – '+esc(n2)+'</div>'+tilesHtml(d)+'</div>';
+  h+='<div class="card"><h3>Leitura para o treinador</h3>'+dicasHtml(dicasPartida(d))
+    +'<div class="mini" style="margin-top:8px">Gerada dos pontos marcados — conferir com o que você está vendo na quadra.</div></div>';
+  h+=pressaoHtml(d,n1,n2);
+  h+=porSetHtml(d.an,n1);
+  $('#v-jogos').innerHTML=h;
+}
+
+/* ---------- virada de set: aparece sozinha, serve para a conversa do intervalo ---------- */
+function quebraSetHtml(j,i,botoes){
+  const an=analyzeMatch(j.cfg||{}, j.log||[]);
+  const dSet=numeros(an.setPts[i]||[]);
+  const nome=nomeA(j.atletaId), adv=j.adversario||'Adversário';
+  const n1=nome.split(' ')[0], n2=adv.split(' ')[0];
+  const sc=an.setScores[i];
+  const placar=sc?(sc.mtb?('['+sc.tbA+'-'+sc.tbO+']'):(sc.gA+'/'+sc.gO)):'';
+  const ganhou=sc?(sc.mtb?sc.tbA>sc.tbO:sc.gA>sc.gO):false;
+  const parciais=an.setScores.map(x=>x.mtb?('['+x.tbA+'-'+x.tbO+']'):(x.gA+'/'+x.gO)).join('  ');
+  return '<div class="quebra">'
+    +'<div class="quebra-h">Fim do '+(i+1)+'º set</div>'
+    +'<div class="quebra-p">'+esc(ganhou?n1:n2)+' <b>'+esc(placar)+'</b></div>'
+    +'<div class="quebra-s">'+esc(parciais)+'</div>'
+    +tilesHtml(dSet)
+    +'<div class="mini quebra-s">Números deste set — '+esc(n1)+' – '+esc(n2)+'.</div>'
+    +'<div class="card no-tv"><h3>O que dizer no intervalo</h3>'+dicasHtml(dicasPartida(dSet).slice(0,4))+'</div>'
+    +botoes
+    +'</div>';
+}
+
 /* ---------- ACOMPANHAR (assiste ao vivo, sem poder marcar) ----------
    Mesma partida, mesmo placar de rLive — só que sem nenhum botão que grave.
    Quem assiste não tem como estragar a marcação de quem está na arquibancada. */
@@ -1334,7 +1556,8 @@ function sairTv(){
   S.tv=false; document.body.classList.remove('tv');
   try{ if(document.fullscreenElement&&document.exitFullscreen) document.exitFullscreen(); }catch(e){}
 }
-window.watchOpen=function(id){ S.watchId=id; S.liveId=null; S.pend=null; S.finSheet=false; render(); };
+window.watchOpen=function(id){ S.watchId=id; S.liveId=null; S.pend=null; S.finSheet=false; S.watchSets=null; S.watchBreak=null; render(); };
+window.watchFecharQuebra=function(){ S.watchBreak=null; render(); };
 window.watchClose=function(){ S.watchId=null; sairTv(); render(); };
 window.watchTv=function(v){
   if(!v){ sairTv(); render(); return; }
@@ -1359,14 +1582,33 @@ function rWatch(){
     +'<h2 style="font-size:16px">'+esc(j.torneio||'Partida')+'</h2><span style="margin-left:auto"></span>'
     +(rolando?'<span class="aovivo"><i></i>ao vivo</span>':'<span class="chip navy">encerrada</span>')+'</div>';
 
+  /* virada de set: aparece sozinha também para quem assiste, e some no próximo ponto */
+  const nSets=st.sets.length;
+  if(S.watchSets==null) S.watchSets=nSets;
+  else if(nSets>S.watchSets){ S.watchSets=nSets; S.watchBreak=log.length; }
+  if(S.watchBreak!=null && S.watchBreak!==log.length) S.watchBreak=null;
+
+  if(S.watchBreak!=null && !st.over){
+    h+=quebraSetHtml(j,nSets-1,
+      '<div class="live-actions no-tv"><button class="btn sec" style="flex:1" onclick="watchFecharQuebra()">voltar ao placar</button>'
+      +'<button class="btn ghost" onclick="resumoOpen(\''+j.id+'\')">📊 resumo completo</button></div>'
+      +'<div class="tv-sair"><button class="btn ghost" onclick="watchTv(false)">sair do placar grande</button></div>');
+    $('#v-jogos').innerHTML=h; return;
+  }
+
   h+=placarHtml(j,st);
 
   h+='<div class="live-actions no-tv"><button class="btn sec" onclick="watchTv(true)">⛶ placar grande</button>'
+    +(log.length>=6?'<button class="btn sec" onclick="resumoOpen(\''+j.id+'\')">📊 resumo</button>':'')
     +'<span style="flex:1"></span>'
     +(log.length&&!rolando?'<button class="btn ghost" onclick="repOpen(\''+j.id+'\')">📊 relatório</button>':'')+'</div>';
   h+='<div class="tv-sair"><button class="btn ghost" onclick="watchTv(false)">sair do placar grande</button></div>';
 
-  if(st.over) h+='<div class="fim-banner no-tv">Fim de jogo — '+(st.winner==='A'?esc(nome):esc(adv))+' venceu · '+esc(placarStr(st))+'</div>';
+  if(st.over){
+    const d=resumoDados(j);
+    h+='<div class="fim-banner no-tv">Fim de jogo — '+(st.winner==='A'?esc(nome):esc(adv))+' venceu · '+esc(placarStr(st))+'</div>'
+      +tilesHtml(d);
+  }
 
   h+='<div class="card no-tv"><h3>Números da partida</h3>'
     +'<div class="stat-line"><span>Aces: <b>'+s.aces+'</b></span><span>Winners: <b>'+s.win+'</b></span>'
@@ -1409,8 +1651,17 @@ function rLive(){
   let h='<div class="sec-head"><button class="btn sm ghost" onclick="liveExit()">‹ jogos</button><h2 style="font-size:16px">'+esc(j.torneio||'Partida')+'</h2><span class="cnt">'+esc(j.data||'')+'</span></div>';
   h+=placarHtml(j,st);
   const stats=statsFromLog(j.log||[]);
-  if(st.over){
+  if(S.setBreak && !st.over && (j.log||[]).length===S.setBreak.log){
+    h+=quebraSetHtml(j,S.setBreak.i,
+      '<div class="live-actions"><button class="btn" style="flex:1" onclick="liveVoltar()">▶ continuar o jogo</button>'
+      +'<button class="btn sec no-tv" onclick="resumoOpen(\''+j.id+'\')">📊 resumo completo</button></div>'
+      +'<div class="tv-sair"><button class="btn ghost" onclick="watchTv(false)">sair do placar grande</button></div>');
+  } else if(st.over){
+    const d=resumoDados(j);
     h+='<div class="fim-banner">Fim de jogo — '+(st.winner==='A'?esc(nome):esc(adv))+' venceu · '+esc(placarStr(st))+'</div>'
+     +'<div class="card"><h3>Como foi a partida</h3>'+tilesHtml(d)
+     +dicasHtml(dicasPartida(d).slice(0,5))
+     +'<div class="row" style="margin-top:10px"><button class="btn sm sec" onclick="resumoOpen(\''+j.id+'\')">📊 resumo completo</button></div></div>'
      +'<div class="live-actions"><button class="btn" style="flex:1" onclick="liveFinish()">Salvar resultado</button><button class="btn ghost" onclick="liveUndo()">↩ desfazer último ponto</button></div>';
   } else if(S.finSheet){
     h+='<div class="out-title">Finalizar a partida agora?</div>'
@@ -1434,6 +1685,7 @@ function rLive(){
   } else {
     h+='<div class="pt-btns"><button class="pa" onclick="livePoint(\'A\')">Ponto<br>'+esc(nome.split(' ')[0])+'</button><button class="po" onclick="livePoint(\'O\')">Ponto<br>'+esc(adv.split(' ')[0])+'</button></div>';
     h+='<div class="live-actions"><button class="btn ghost" onclick="liveUndo()">↩ desfazer ponto</button>'
+      +((j.log||[]).length>=6?'<button class="btn sec" onclick="resumoOpen(\''+j.id+'\')">📊 resumo</button>':'')
       +'<span style="flex:1"></span>'
       +'<button class="btn sec" onclick="liveFinSheet(true)">◼ Finalizar partida</button></div>'
       +'<div class="mini" style="margin-top:8px">'+esc(nome.split(' ')[0])+': '+stats.aces+' aces · '+stats.win+' winners · '+stats.df+' duplas faltas · '+stats.ef+' EF · '+stats.enf+' ENF</div>'
