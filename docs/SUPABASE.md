@@ -123,6 +123,7 @@ A partir daí só entra quem você criou na mão.
 | `torneios` | Análises de torneio |
 | `jogos` | Jogos, inclusive a marcação ponto a ponto |
 | `relatorios` | textos do Relatório Trimestral do Programa |
+| `pulso` | só um horário, usado pelo robô que impede o banco de hibernar |
 
 Cada linha guarda um documento em JSON na coluna `data`. Você pode olhar tudo
 pelo **Table Editor** do Supabase, e exportar em CSV quando quiser.
@@ -139,6 +140,30 @@ Isso é garantido pelo **banco**, não pela tela: mesmo que alguém tente burlar
 app, o Postgres recusa. As regras estão no fim do `supabase/schema.sql`.
 
 ---
+
+## O banco hiberna? (e o robô que impede isso)
+
+No plano gratuito, o Supabase **pausa o projeto depois de ~7 dias sem nenhum
+acesso**. Quando isso acontece, o sistema abre com erro de banco até alguém
+retomar — e os dados continuam seguros o tempo todo, nada se perde.
+
+**Para retomar na mão:** abra <https://supabase.com/dashboard>, entre no projeto
+e clique em **Resume project**. Leva 1 a 2 minutos. (Se o Chrome estiver
+traduzindo a página, esse botão aparece como *"Projeto de currículo"* — é um erro
+do tradutor: *resume* aqui é **retomar**, não currículo. É o botão certo.)
+
+**Para não precisar fazer isso:** já existe um robô no repositório,
+[`.github/workflows/manter-acordado.yml`](../.github/workflows/manter-acordado.yml),
+que consulta o banco todo dia às 10h23 de Brasília. Um acesso por dia basta para
+o projeto nunca hibernar. Ele não usa senha — lê a URL e a chave publicável do
+próprio `config.js` e consulta a tabela `pulso`, que guarda só um horário.
+
+Para ver se está rodando: aba **Actions** do repositório → *Manter o banco
+acordado*. Se alguma execução falhar, o GitHub te manda um e-mail.
+
+> ⚠️ **Um limite do GitHub:** se o repositório passar **60 dias sem nenhuma
+> alteração**, ele desliga sozinho as tarefas agendadas (e avisa por e-mail).
+> Aí basta reativar na aba Actions, ou clicar em *Run workflow* uma vez.
 
 ## A bolinha ao lado do título
 

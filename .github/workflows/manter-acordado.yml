@@ -1,0 +1,26 @@
+# Mantém o banco do clube acordado.
+#
+# No plano gratuito, o Supabase pausa o projeto depois de ~7 dias sem nenhum
+# acesso — e aí o sistema abre com erro até alguém retomar pelo painel.
+# Este robô consulta o banco uma vez por dia, o que basta para ele não dormir.
+#
+# Não usa senha nenhuma: lê a URL e a chave publicável do próprio config.js e
+# consulta a tabela `pulso`, que guarda só um horário.
+#
+# Se falhar, o GitHub manda um e-mail para o dono do repositório.
+name: Manter o banco acordado
+
+on:
+  schedule:
+    - cron: '23 13 * * *'   # todo dia, 13h23 UTC (10h23 em Brasília)
+  workflow_dispatch:         # e quando você clicar em "Run workflow"
+
+permissions:
+  contents: read
+
+jobs:
+  pulso:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: node .github/scripts/pulso.mjs

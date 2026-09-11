@@ -177,6 +177,24 @@ a.link{color:var(--clay)}
 button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--navy);outline-offset:1px}
 @media(min-width:720px){ nav{position:sticky;top:52px;bottom:auto;border-top:0;border-bottom:1px solid var(--line);justify-content:flex-start;gap:4px;padding:4px 12px} nav button{flex:none;flex-direction:row;font-size:13px;padding:8px 12px} body{padding-bottom:20px} }
 @media (prefers-reduced-motion: reduce){ *{transition:none!important;animation:none!important} }
+/* acompanhar ao vivo + placar de TV */
+.aovivo{display:inline-flex;align-items:center;gap:6px;font:700 11px var(--font);color:var(--bad);text-transform:uppercase;letter-spacing:.5px}
+.aovivo i{width:8px;height:8px;border-radius:50%;background:var(--bad);animation:pulsa 1.4s infinite}
+@keyframes pulsa{0%,100%{opacity:1}50%{opacity:.2}}
+.tv-sair{margin-top:12px;text-align:center}
+body:not(.tv) .tv-sair{display:none}
+body.tv{padding-bottom:0;background:var(--surface)}
+body.tv header,body.tv nav,body.tv .no-tv{display:none!important}
+body.tv main{max-width:100%;padding:0}
+body.tv .sb{border:0;border-radius:0;box-shadow:none;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;justify-content:center;padding:3vh 4vw}
+body.tv .sb-row{padding:2.5vh 0}
+body.tv .sb-nome{font-size:clamp(20px,4.5vw,60px);gap:2vw}
+body.tv .sb-pts{font-size:clamp(38px,11vw,150px);min-width:auto;padding:0 2vw;border-radius:1.5vw}
+body.tv .sb-set{font-size:clamp(22px,5vw,72px);min-width:auto;padding:0 1.2vw}
+body.tv .srv{width:clamp(10px,1.4vw,20px);height:clamp(10px,1.4vw,20px)}
+body.tv .sb .mini{font-size:clamp(12px,1.6vw,22px);margin-top:2vh!important}
+body.tv .tv-sair{position:fixed;bottom:2vh;left:0;right:0;margin:0;opacity:.3}
+body.tv .tv-sair:hover{opacity:1}
 /* tela de entrada do banco do clube */
 body.trancado{overflow:hidden}
 #login{position:fixed;inset:0;z-index:60;background:var(--paper);display:flex;align-items:center;justify-content:center;padding:20px}
@@ -899,6 +917,7 @@ function rReport(){
 function rJogos(){
   if(S.repId){ rReport(); return; }
   if(S.liveId){ rLive(); return; }
+  if(S.watchId){ rWatch(); return; }
   const andamento=S.jogos.filter(j=>j.finalizado===false).sort((a,b)=>b.ts-a.ts);
   const list=S.jogos.filter(j=>j.finalizado!==false).sort((a,b)=>(b.data||'').localeCompare(a.data||''));
   let h='<div class="sec-head"><h2>Jogos</h2><span class="cnt">'+list.length+'</span>'
@@ -906,8 +925,11 @@ function rJogos(){
    +'<div class="mini" style="margin-bottom:10px"><b>▶ Ao vivo</b>: marque ponto a ponto da arquibancada — o placar calcula sozinho e o técnico acompanha em tempo real. <b>+ Resultado</b>: registro rápido de jogo já encerrado.</div>';
   for(const j of andamento){
     const st=computeMatch(j.cfg||{},j.log||[]);
+    /* quem não criou a partida só pode assistir — o banco recusaria a gravação dele */
+    const podeMarcar = S.role==='coach' || !S.uid || j.criadoPor===S.uid;
     h+='<div class="card" style="border-color:var(--clay)"><div class="row"><h3>'+esc(nomeA(j.atletaId))+' × '+esc(j.adversario||'?')+'</h3><span class="chip clay">EM ANDAMENTO</span>'
-      +'<span style="margin-left:auto"></span><button class="btn sm" onclick="S.liveId=\''+j.id+'\';render()">continuar ▶</button></div>'
+      +'<span style="margin-left:auto"></span><button class="btn sm sec" onclick="watchOpen(\''+j.id+'\')">👁 acompanhar</button>'
+      +(podeMarcar?'<button class="btn sm" onclick="S.liveId=\''+j.id+'\';render()">continuar ▶</button>':'')+'</div>'
       +'<div class="sub">'+esc(placarStr(st)||'0/0')+(j.torneio?' · '+esc(j.torneio):'')+'</div></div>';
   }
   if(!list.length&&!andamento.length) h+='<div class="empty">Nenhum jogo ainda. Toque em <b>▶ Ao vivo</b> na hora da partida.</div>';
@@ -1267,7 +1289,7 @@ window.fJogoLive=function(){
       const cfg={sets:+sets,games:+games,mtb:mtb==='mtb',noAd:$('#fNoAd').value==='1',srv:$('#fSrv').value};
       if(!S.db){dlgErr('Sem conexão com o banco.');return false}
       try{
-        const ref=await S.db.collection('jogos').add({atletaId:aid,data:$('#fData').value,torneio:$('#fTorneio').value.trim(),tipoTorneio:$('#fTipoT').value,quadra:$('#fQuadra').value,adversario:$('#fAdv').value.trim(),clubeAdv:$('#fClube').value.trim(),cfg,log:[],finalizado:false,ts:Date.now()});
+        const ref=await S.db.collection('jogos').add({atletaId:aid,data:$('#fData').value,torneio:$('#fTorneio').value.trim(),tipoTorneio:$('#fTipoT').value,quadra:$('#fQuadra').value,adversario:$('#fAdv').value.trim(),clubeAdv:$('#fClube').value.trim(),cfg,log:[],finalizado:false,criadoPor:S.uid||null,ts:Date.now()});
         S.liveId=ref.id; S.tab='jogos'; render(); return true;
       }catch(e){ dlgErr(errMsg(e)); return false }
     },'Começar partida');
@@ -1304,25 +1326,88 @@ window.liveFinish=async function(forceRes){
   catch(e){ toast(errMsg(e),true); }
 };
 window.liveExit=function(){ S.liveId=null; S.pend=null; S.finSheet=false; render(); };
-function rLive(){
-  const j=liveDoc();
-  if(!j){ S.liveId=null; rJogos(); return; }
+/* ---------- ACOMPANHAR (assiste ao vivo, sem poder marcar) ----------
+   Mesma partida, mesmo placar de rLive — só que sem nenhum botão que grave.
+   Quem assiste não tem como estragar a marcação de quem está na arquibancada. */
+function sairTv(){
+  if(!S.tv) return;
+  S.tv=false; document.body.classList.remove('tv');
+  try{ if(document.fullscreenElement&&document.exitFullscreen) document.exitFullscreen(); }catch(e){}
+}
+window.watchOpen=function(id){ S.watchId=id; S.liveId=null; S.pend=null; S.finSheet=false; render(); };
+window.watchClose=function(){ S.watchId=null; sairTv(); render(); };
+window.watchTv=function(v){
+  if(!v){ sairTv(); render(); return; }
+  S.tv=true; document.body.classList.add('tv');
+  try{ if(document.documentElement.requestFullscreen) document.documentElement.requestFullscreen(); }catch(e){}
+  render();
+};
+/* sair da tela cheia pelo Esc não pode deixar o layout de TV preso */
+document.addEventListener('fullscreenchange',()=>{ if(!document.fullscreenElement&&S.tv){ sairTv(); try{ render(); }catch(e){} } });
+
+const TAG_LBL={ace:'ace',win:'winner',ef:'erro forçado',enf:'erro não forçado',df:'dupla falta'};
+function rWatch(){
+  const j=S.jogos.find(x=>x.id===S.watchId);
+  if(!j){ S.watchId=null; sairTv(); rJogos(); return; }
   const st=computeMatch(j.cfg||{},j.log||[]);
+  const nome=nomeA(j.atletaId), adv=j.adversario||'Adversário';
+  const n1=nome.split(' ')[0], n2=adv.split(' ')[0];
+  const log=j.log||[], s=statsFromLog(log);
+  const rolando=j.finalizado===false;
+
+  let h='<div class="sec-head no-tv"><button class="btn sm ghost" onclick="watchClose()">‹ jogos</button>'
+    +'<h2 style="font-size:16px">'+esc(j.torneio||'Partida')+'</h2><span style="margin-left:auto"></span>'
+    +(rolando?'<span class="aovivo"><i></i>ao vivo</span>':'<span class="chip navy">encerrada</span>')+'</div>';
+
+  h+=placarHtml(j,st);
+
+  h+='<div class="live-actions no-tv"><button class="btn sec" onclick="watchTv(true)">⛶ placar grande</button>'
+    +'<span style="flex:1"></span>'
+    +(log.length&&!rolando?'<button class="btn ghost" onclick="repOpen(\''+j.id+'\')">📊 relatório</button>':'')+'</div>';
+  h+='<div class="tv-sair"><button class="btn ghost" onclick="watchTv(false)">sair do placar grande</button></div>';
+
+  if(st.over) h+='<div class="fim-banner no-tv">Fim de jogo — '+(st.winner==='A'?esc(nome):esc(adv))+' venceu · '+esc(placarStr(st))+'</div>';
+
+  h+='<div class="card no-tv"><h3>Números da partida</h3>'
+    +'<div class="stat-line"><span>Aces: <b>'+s.aces+'</b></span><span>Winners: <b>'+s.win+'</b></span>'
+    +'<span>Duplas faltas: <b>'+s.df+'</b></span><span>Erros forçados: <b>'+s.ef+'</b></span>'
+    +'<span>Erros não forçados: <b>'+s.enf+'</b></span></div>'
+    +'<div class="mini" style="margin-top:4px">Na perspectiva de '+esc(n1)+'.</div>';
+  if(log.length){
+    h+='<div class="row" style="margin-top:10px">'+log.slice(-14).reverse().map(p=>
+        '<span class="chip '+(p.w==='A'?'clay':'navy')+'">'+esc(p.w==='A'?n1:n2)+(p.tag?' · '+TAG_LBL[p.tag]:'')+'</span>').join('')+'</div>'
+      +'<div class="mini" style="margin-top:5px">Últimos pontos — o mais recente primeiro.</div>';
+  } else h+='<div class="mini" style="margin-top:10px">Nenhum ponto marcado ainda.</div>';
+  h+='</div>';
+
+  h+='<div class="mini no-tv" style="margin-top:4px">Você está apenas acompanhando: nada aqui altera a partida. '
+    +(rolando?'A tela se atualiza sozinha a cada ponto marcado.':'')+'</div>';
+  $('#v-jogos').innerHTML=h;
+}
+
+/* o placar — o mesmo para quem marca (rLive) e para quem assiste (rWatch) */
+function placarHtml(j,st){
   const [dA,dO]=ptsDisplay(st);
   const nome=nomeA(j.atletaId), adv=j.adversario||'Adversário';
-  const last=(j.log||[])[(j.log||[]).length-1];
   const setCols=(who)=>{
     let cols=st.sets.map(s=>{ const g=who==='A'?(s.mtb?s.tbA:s.gA):(s.mtb?s.tbO:s.gO); const won=who==='A'?(s.mtb?s.tbA>s.tbO:s.gA>s.gO):(s.mtb?s.tbO>s.tbA:s.gO>s.gA); return '<span class="sb-set'+(won?' won':'')+'">'+g+'</span>'; }).join('');
     if(!st.over) cols+='<span class="sb-set won">'+(st.mtb?'':who==='A'?st.gA:st.gO)+'</span>';
     return cols;
   };
-  let h='<div class="sec-head"><button class="btn sm ghost" onclick="liveExit()">‹ jogos</button><h2 style="font-size:16px">'+esc(j.torneio||'Partida')+'</h2><span class="cnt">'+esc(j.data||'')+'</span></div>';
-  h+='<div class="sb">'
+  return '<div class="sb">'
     +'<div class="sb-row"><div class="sb-nome">'+(st.srv==='A'&&!st.over?'<span class="srv"></span>':'')+'<span>'+esc(nome)+'</span></div><div class="sb-nums">'+setCols('A')+(st.over?'':'<span class="sb-pts">'+dA+'</span>')+'</div></div>'
     +'<div class="sb-row" style="border-top:1px solid var(--line)"><div class="sb-nome">'+(st.srv==='O'&&!st.over?'<span class="srv"></span>':'')+'<span>'+esc(adv)+'</span></div><div class="sb-nums">'+setCols('O')+(st.over?'':'<span class="sb-pts">'+dO+'</span>')+'</div></div>'
     +(st.tb?'<div class="mini" style="text-align:center;margin-top:4px">tiebreak</div>':'')
     +(st.mtb?'<div class="mini" style="text-align:center;margin-top:4px">match tiebreak — até 10</div>':'')
     +'</div>';
+}
+function rLive(){
+  const j=liveDoc();
+  if(!j){ S.liveId=null; rJogos(); return; }
+  const st=computeMatch(j.cfg||{},j.log||[]);
+  const nome=nomeA(j.atletaId), adv=j.adversario||'Adversário';
+  let h='<div class="sec-head"><button class="btn sm ghost" onclick="liveExit()">‹ jogos</button><h2 style="font-size:16px">'+esc(j.torneio||'Partida')+'</h2><span class="cnt">'+esc(j.data||'')+'</span></div>';
+  h+=placarHtml(j,st);
   const stats=statsFromLog(j.log||[]);
   if(st.over){
     h+='<div class="fim-banner">Fim de jogo — '+(st.winner==='A'?esc(nome):esc(adv))+' venceu · '+esc(placarStr(st))+'</div>'
@@ -1351,14 +1436,15 @@ function rLive(){
     h+='<div class="live-actions"><button class="btn ghost" onclick="liveUndo()">↩ desfazer ponto</button>'
       +'<span style="flex:1"></span>'
       +'<button class="btn sec" onclick="liveFinSheet(true)">◼ Finalizar partida</button></div>'
-      +'<div class="mini" style="margin-top:8px">'+esc(nome.split(' ')[0])+': '+stats.aces+' aces · '+stats.win+' winners · '+stats.df+' duplas faltas · '+stats.ef+' EF · '+stats.enf+' ENF</div>';
+      +'<div class="mini" style="margin-top:8px">'+esc(nome.split(' ')[0])+': '+stats.aces+' aces · '+stats.win+' winners · '+stats.df+' duplas faltas · '+stats.ef+' EF · '+stats.enf+' ENF</div>'
+      +'<div class="mini" style="margin-top:6px">Só uma pessoa deve marcar a partida. Quem quiser acompanhar deve usar <b>👁 acompanhar</b> na lista de jogos — assim não há risco de pontos se perderem.</div>';
   }
   $('#v-jogos').innerHTML=h;
 }
 
 /* ================= boot (por último: tudo acima precisa existir) ================= */
 window.switchTab=function(t){
-  S.tab=t;
+  S.tab=t; sairTv();
   document.querySelectorAll('#nav button').forEach(x=>x.classList.toggle('act',x.dataset.t===t));
   document.querySelectorAll('main section').forEach(x=>x.hidden = x.id !== 'v-'+t);
   render();
@@ -1599,6 +1685,7 @@ async function entrarNoClube(){
   const ru=await S.sb.auth.getUser();
   const user=ru&&ru.data&&ru.data.user;
   if(!user){ const e=new Error('sem sessão'); e.code='unauthenticated'; throw e; }
+  S.uid=user.id;
   let papel='atleta', nome='';
   /* o Supabase devolve o erro DENTRO da resposta: se não olharmos, um treinador
      entra rebaixado a atleta sem ninguém avisar. Por isso o aviso explícito. */

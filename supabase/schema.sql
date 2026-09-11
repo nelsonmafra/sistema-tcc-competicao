@@ -162,7 +162,25 @@ begin
 end $$;
 
 
--- 6) O ÚLTIMO PASSO, QUE VOCÊ FAZ UMA VEZ SÓ --------------------------
+-- 6) PULSO: a tabelinha que impede o banco de hibernar ----------------
+-- No plano gratuito, o Supabase pausa o projeto depois de ~7 dias sem uso.
+-- O robô do GitHub (.github/workflows/manter-acordado.yml) lê esta tabela
+-- uma vez por dia, e isso basta para o banco continuar de pé.
+-- Ela guarda só um horário: nenhum dado do programa passa por aqui.
+create table if not exists public.pulso (
+  id        int primary key default 1 check (id = 1),
+  visto_em  timestamptz not null default now()
+);
+insert into public.pulso (id) values (1) on conflict (id) do nothing;
+alter table public.pulso enable row level security;
+
+grant select on public.pulso to anon, authenticated;
+drop policy if exists "pulso: leitura publica" on public.pulso;
+create policy "pulso: leitura publica" on public.pulso
+  for select to anon, authenticated using (true);
+
+
+-- 7) O ÚLTIMO PASSO, QUE VOCÊ FAZ UMA VEZ SÓ --------------------------
 -- Depois de criar o SEU usuário (Authentication > Users > Add user),
 -- rode a linha abaixo trocando o e-mail — ela te promove a treinador.
 -- Sem isso, todo mundo (inclusive você) entra como atleta.
