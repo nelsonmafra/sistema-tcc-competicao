@@ -164,7 +164,30 @@ textarea{min-height:64px;resize:vertical}
 .mom-pt.press{position:relative}
 .mom-pt.press::after{content:"◉";position:absolute;left:0;right:0;top:-11px;font-size:8px;color:var(--muted)}
 svg text{font-family:var(--font)}
-@media print{ header,nav,#toast,.no-print{display:none!important} body{background:#fff;padding:0} main{max-width:100%;padding:0} .card{box-shadow:none;break-inside:avoid} }
+.print-only,.print-cab{display:none}
+@media print{
+  /* força a paleta clara: senão quem estiver no modo escuro imprime página preta */
+  :root,:root[data-theme="dark"],:root:not([data-theme="light"]){
+    --paper:#fff; --surface:#fff; --ink:#111; --muted:#555; --line:#ccc; --shadow:none;
+    --navy:#444; --navy-soft:#eee; --clay:#1B6FD8; --clay-soft:#e7f0fc;
+    --ok:#1e7a3c; --ok-soft:#e6f4ea; --warn:#8a5a00; --warn-soft:#fbf0da; --bad:#b3261e; --bad-soft:#fbe9e7;
+    --sA:#1B6FD8; --sO:#8A919A;
+    --tgW:#2e7d32; --tgA:#1565c0; --tgD:#c62828; --tgU:#6a1b9a; --tgF:#e65100;
+    color-scheme:light;
+  }
+  html,body{background:#fff!important}
+  body{padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  header,nav,#toast,#login,dialog,.no-print,.setsel,.mom-hint{display:none!important}
+  .print-only{display:block}
+  .print-cab{display:block;font:600 10.5px var(--font);color:#555;letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid #ccc;padding-bottom:6px;margin-bottom:12px}
+  main{max-width:100%;padding:0}
+  .card{box-shadow:none;border:1px solid #ddd;break-inside:avoid;page-break-inside:avoid}
+  .mom{overflow:visible!important}
+  .mom-g{break-inside:avoid;page-break-inside:avoid;margin:0 8px 8px 0}
+  .print-set{break-before:page;page-break-before:always;font:800 16px var(--font);margin:0 0 8px}
+  .tiles{break-inside:avoid}
+  @page{margin:14mm}
+}
 .live-actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
 .fim-banner{background:var(--ok-soft);color:var(--ok);border-radius:10px;padding:12px 14px;font:700 15px var(--font);text-align:center;margin-top:12px}
 .tbl{width:100%;border-collapse:collapse;font-size:13px}
@@ -865,7 +888,10 @@ function rReport(){
   const tagVar=t=>{const x=TAGS.find(z=>z[0]===t);return x?x[2]:null};
   const cnt=(w,t)=>all.filter(p=>p.w===w&&p.tag===t).length;
 
-  let h='<div class="sec-head"><button class="btn sm ghost" onclick="repClose()">‹ jogos</button><h2 style="font-size:16px">Relatório da partida</h2></div>';
+  let h='<div class="sec-head no-print"><button class="btn sm ghost" onclick="repClose()">‹ jogos</button>'
+    +'<h2 style="font-size:16px">Relatório da partida</h2><span style="flex:1"></span>'
+    +'<button class="btn sm sec" onclick="repPrint()">🖨 imprimir / PDF</button></div>'
+    +'<div class="print-cab">Ponto a Ponto · Tênis Clube de Campinas · Programa de Tênis de Competição</div>';
   h+='<div class="card"><div class="row"><h3>'+esc(nome)+' × '+esc(adv)+'</h3>'
     +(j.resultado==='V'?'<span class="chip ok">V</span>':j.resultado==='D'?'<span class="chip bad">D</span>':'<span class="chip warn">'+(j.finalizado===false?'em andamento':'interrompida')+'</span>')
     +'</div><div class="sub">'+esc(j.placar||placarStr(computeMatch(j.cfg||{},j.log||[])))+(j.torneio?' · '+esc(j.torneio):'')+(j.data?' · '+esc(j.data):'')+'</div>'
@@ -895,14 +921,11 @@ function rReport(){
     +pctBar('Set points',sA2,sTA,sO2,sTO,n1,n2)
     +'</div>';
 
-  /* seletor de set */
-  const nSets=an.setPts.length;
-  h+='<div class="setsel">'+an.setPts.map((_,i)=>'<button class="'+(S.repSet===i?'on':'')+'" onclick="repSet('+i+')">Set '+(i+1)+'</button>').join('')+'</div>';
-  const sp=an.setPts[Math.min(S.repSet,nSets-1)]||[];
-  const sgames=an.games.filter(g=>g.set===Math.min(S.repSet,nSets-1));
-
+  /* ---- um set: ponto a ponto, score worm e pressão tática ---- */
+  function repSetBloco(i,sufixo){
+  const sp=an.setPts[i]||[], sgames=an.games.filter(g=>g.set===i);
   /* momentum ponto a ponto */
-  h+='<div class="card"><h3>Ponto a ponto</h3>'
+  let h='<div class="card"><h3>Ponto a ponto</h3>'
     +'<div class="rep-legend">'+TAGS.map(([t,lbl,v])=>'<span><i style="background:var('+v+')"></i>'+lbl+'</span>').join('')+'<span>◉ ponto de pressão</span></div>'
     +'<div class="mom">';
   const byGame={};
@@ -925,7 +948,7 @@ function rReport(){
     }
     h+='</div>';
   }
-  h+='</div><div class="mini">'+n1+' na linha de cima, '+n2+' embaixo. Deslize para o lado para ver todos os games.</div></div>';
+  h+='</div><div class="mini mom-hint">'+n1+' na linha de cima, '+n2+' embaixo. Deslize para o lado para ver todos os games.</div></div>';
 
   /* score worm */
   const W=640,H=170,mid=H/2-8;
@@ -965,16 +988,33 @@ function rReport(){
     area+=' L'+sx(mov.length-1)+' '+mid+' Z';
     h+='<div class="card"><h3>Pressão tática</h3><div class="mini" style="margin-bottom:4px">Média móvel de 10 pontos — acima da linha, momento com '+n1+'; abaixo, com '+n2+'.</div>'
       +'<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto" role="img" aria-label="Momento da partida">'
-      +'<defs><clipPath id="cUp"><rect x="0" y="0" width="'+W+'" height="'+mid+'"/></clipPath>'
-      +'<clipPath id="cDn"><rect x="0" y="'+mid+'" width="'+W+'" height="'+(H-mid)+'"/></clipPath></defs>'
+      +'<defs><clipPath id="cUp'+sufixo+'"><rect x="0" y="0" width="'+W+'" height="'+mid+'"/></clipPath>'
+      +'<clipPath id="cDn'+sufixo+'"><rect x="0" y="'+mid+'" width="'+W+'" height="'+(H-mid)+'"/></clipPath></defs>'
       +'<line x1="10" y1="'+mid+'" x2="'+(W-20)+'" y2="'+mid+'" stroke="var(--line)"/>'
-      +'<path d="'+area+'" fill="var(--sA)" opacity="0.35" clip-path="url(#cUp)"/>'
-      +'<path d="'+area+'" fill="var(--muted)" opacity="0.3" clip-path="url(#cDn)"/>'
+      +'<path d="'+area+'" fill="var(--sA)" opacity="0.35" clip-path="url(#cUp'+sufixo+')"/>'
+      +'<path d="'+area+'" fill="var(--muted)" opacity="0.3" clip-path="url(#cDn'+sufixo+')"/>'
       +'<path d="'+area.replace(/ L[\d.]+ [\d.]+ Z$/,'')+'" fill="none" stroke="var(--ink)" stroke-width="1.4" opacity="0.7"/>'
       +'<text x="12" y="14" font-size="11" fill="var(--sA)" font-weight="600">'+n1+'</text>'
       +'<text x="12" y="'+(H-6)+'" font-size="11" fill="var(--muted)">'+n2+'</text>'
       +'</svg></div>';
   }
+  return h;
+  }
+
+  /* na tela: o set escolhido. Na impressão: todos os sets, um por página. */
+  const nSets=an.setPts.length;
+  h+='<div class="no-print">'
+    +'<div class="setsel">'+an.setPts.map((_,i)=>'<button class="'+(S.repSet===i?'on':'')+'" onclick="repSet('+i+')">Set '+(i+1)+'</button>').join('')+'</div>'
+    +repSetBloco(Math.min(S.repSet,nSets-1),'')
+    +'</div>';
+  h+='<div class="print-only">';
+  an.setPts.forEach((pts,i)=>{
+    if(!pts.length) return;
+    const sc=an.setScores[i];
+    const placar=sc?(sc.mtb?('['+sc.tbA+'-'+sc.tbO+']'):(sc.gA+'/'+sc.gO)):'em andamento';
+    h+='<h3 class="print-set">Set '+(i+1)+' — '+esc(placar)+'</h3>'+repSetBloco(i,'p'+i);
+  });
+  h+='</div>';
   $('#v-jogos').innerHTML=h;
 }
 
@@ -1032,7 +1072,26 @@ window.fJogo=function(){
 window.relOpenProg=function(){ S.relView='prog'; render(); };
 window.relOpenAtleta=function(sel){ if(!sel.value)return; S.relAtleta=sel.value; S.relView='atleta'; render(); };
 window.relBack=function(){ S.relView=null; S.relAtleta=null; render(); };
-window.relPrint=function(){ try{ window.print(); }catch(e){ toast('Use o menu do navegador para imprimir/salvar em PDF.',true); } };
+/* o navegador usa o título da página como nome do PDF — vale dar um bom */
+function imprimirComTitulo(t){
+  const antigo=document.title;
+  const limpo=String(t||'').replace(/[\\/:*?"<>|]/g,'-').replace(/\s+/g,' ').trim().slice(0,90);
+  document.title=limpo||antigo;
+  let feito=false;
+  const restaura=()=>{ if(feito)return; feito=true; document.title=antigo; window.removeEventListener('afterprint',restaura); };
+  window.addEventListener('afterprint',restaura);
+  setTimeout(restaura,60000);
+  try{ window.print(); }
+  catch(e){ toast('Use o menu do navegador para imprimir ou salvar em PDF.',true); restaura(); }
+}
+window.relPrint=function(){
+  const a=S.relView==='atleta'?atleta(S.relAtleta):null;
+  imprimirComTitulo(a? 'Dossie '+a.nome+' '+triLabel(S.tri) : 'Relatorio do Programa '+triLabel(S.tri));
+};
+window.repPrint=function(){
+  const j=S.jogos.find(x=>x.id===S.repId); if(!j) return;
+  imprimirComTitulo('Relatorio '+nomeA(j.atletaId)+' x '+(j.adversario||'adversario')+(j.data?' '+j.data:''));
+};
 window.relSaveProg=async function(){
   if(!S.db) return;
   const body={tri:S.tri,destaques:$('#rDest').value.trim(),pendencias:$('#rPend').value.trim(),decisoes:$('#rDec').value.trim(),ts:Date.now()};
