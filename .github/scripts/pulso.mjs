@@ -14,7 +14,7 @@ function falhar(msg){
 const ctx = { window:{} };
 vm.createContext(ctx);
 vm.runInContext(fs.readFileSync('config.js','utf8'), ctx);
-const cfg = ctx.window.TCC_CONFIG || {};
+const cfg = ctx.window.APP_CONFIG || ctx.window.TCC_CONFIG || {};
 
 const url = String(cfg.SUPABASE_URL||'').trim()
   .replace(/\/+$/,'')

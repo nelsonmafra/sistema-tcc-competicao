@@ -7,7 +7,7 @@
 <title>Ponto a Ponto</title>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <meta name="apple-mobile-web-app-title" content="Ponto a Ponto">
-<meta name="description" content="Ponto a Ponto — o sistema do Programa de Tênis de Competição do Tênis Clube de Campinas: atletas, avaliações trimestrais, metas de PDI, torneios, marcação ponto a ponto e relatórios.">
+<meta name="description" content="Ponto a Ponto — acompanhamento de atletas de tênis de competição: avaliações trimestrais, metas de PDI, torneios, marcação ponto a ponto e relatórios.">
 <style>
   html{color-scheme:light dark}
   body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif}
@@ -292,7 +292,7 @@ body.trancado{overflow:hidden}
 <div id="login" hidden>
   <form id="loginForm">
     <h1>Ponto <b>a Ponto</b></h1>
-    <div class="lg-sub">Programa de Tênis de Competição · Tênis Clube de Campinas</div>
+    <div class="lg-sub">Acompanhamento de atletas de tênis de competição</div>
     <label for="lgMail">E-mail</label>
     <input id="lgMail" type="email" autocomplete="username" required>
     <label for="lgPass">Senha</label>
@@ -312,8 +312,8 @@ const DIM_AV = [['tec','Técnica'],['tat','Tática'],['fis','Física'],['ati','A
 const CRITERIOS = ['Domínio técnico dos fundamentos da etapa','Sustenta o jogo taticamente em partida','Rotina de treino com autonomia','Comportamento competitivo adequado','Volume/frequência compatíveis com a próxima etapa'];
 const BOLAS = ['Vermelha','Laranja','Verde','Amarela'];
 const QUADRAS = ['Saibro','Rápida (dura)','Rápida coberta','Grama','Grama sintética','Carpete','Sintético','Areia','Outra'];
-/* nível do torneio — do amistoso ao Grand Slam, passando pelo que o TCC joga de fato */
-const TIPOS_TORNEIO = ['Amistoso','Jogo-treino','Interno TCC','Torneio de clube','Kids (Play & Stay)','Regional','Estadual (FPT)','Nacional (CBT)','COSAT','ITF Juniors','ITF World Tour','ATP Challenger','ATP 250','ATP 500','ATP Masters 1000','ATP Finals','WTA 125','WTA 250','WTA 500','WTA 1000','WTA Finals','Grand Slam'];
+/* nível do torneio — do amistoso ao Grand Slam */
+const TIPOS_TORNEIO = ['Amistoso','Jogo-treino','Interno do clube','Torneio de clube','Kids (Play & Stay)','Regional','Estadual (FPT)','Nacional (CBT)','COSAT','ITF Juniors','ITF World Tour','ATP Challenger','ATP 250','ATP 500','ATP Masters 1000','ATP Finals','WTA 125','WTA 250','WTA 500','WTA 1000','WTA Finals','Grand Slam'];
 const RODADAS = ['Qualificatório','Primeira rodada','Segunda rodada','Terceira rodada','Oitavas de final','Quartas de final','Semifinal','Final','Fase de grupos','Repescagem','Amistoso'];
 const CATEGORIAS = ['Sub-10','Sub-12','Sub-14','Sub-16','Sub-18','Adulto','1ª classe','2ª classe','3ª classe','4ª classe','Sênior 35+','Sênior 45+','Sênior 55+'];
 const selOpts=(arr,selv)=>'<option value="">—</option>'+arr.map(o=>'<option '+(o===selv?'selected':'')+'>'+o+'</option>').join('');
@@ -1141,7 +1141,6 @@ function rRelProg(){
     +'<textarea id="rPend" placeholder="o que não aconteceu como planejado; sinais de sondagem de atletas">'+esc(saved.pendencias||'')+'</textarea></div>';
   h+='<div class="card"><h3>5. Decisões solicitadas ao comitê</h3><textarea id="rDec" placeholder="lista objetiva do que precisa ser decidido ou destravado">'+esc(saved.decisoes||'')+'</textarea></div>';
   h+='<div class="row no-print" style="margin:4px 0 14px"><button class="btn" onclick="relSaveProg()">Salvar textos</button></div>';
-  h+='<div class="card"><div class="mini">Trio técnico: Johan "Yuki" Wachtmeister · Sergio Urbano Luiz · João Guilherme Chiminazzo</div></div>';
   $('#v-relatorios').innerHTML=h;
 }
 function aggPressao(jogosList){
@@ -1358,7 +1357,7 @@ async function importRecords(arr){
 }
 window.fImport=function(){
   openDlg('Importar resultados',
-    '<div class="mini" style="margin-bottom:6px">Use a <b>Planilha de Importação de Jogos do TCC</b> (peça ao coordenador do programa): preencha um jogo por linha e envie o arquivo aqui — ou copie as linhas no Excel e cole abaixo.</div>'
+    '<div class="mini" style="margin-bottom:6px">Use a <b>Planilha de Importação de Jogos</b> (peça ao coordenador): preencha um jogo por linha e envie o arquivo aqui — ou copie as linhas no Excel e cole abaixo.</div>'
     +'<label>1) Arquivo da planilha (.xlsx / .csv)</label><input id="fArq" type="file" accept=".xlsx,.xls,.csv">'
     +'<label>2) Ou cole aqui as linhas copiadas da planilha (com o cabeçalho)</label><textarea id="fCola" style="min-height:90px" placeholder="Atleta\tData\tTorneio\t..."></textarea>'
     +'<details style="margin-top:10px"><summary class="mini" style="cursor:pointer">Modo avançado (JSON)</summary>'
@@ -1797,7 +1796,9 @@ const SB_LIBS=['https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/su
 /* aceita a URL do projeto com ou sem a parte final (/rest/v1, /auth/v1...),
    que é o que aparece copiado de algumas telas do painel do Supabase */
 function sbCfg(){
-  const c=window.TCC_CONFIG||{};
+  /* aceita o nome antigo também: se o navegador servir um config.js em cache,
+     a página continua achando a configuração em vez de cair no modo local */
+  const c=window.APP_CONFIG||window.TCC_CONFIG||{};
   const url=String(c.SUPABASE_URL||'').trim().replace(/\/+$/,'').replace(/\/(rest|auth|storage|realtime)\/v1$/,'');
   return {url, key:String(c.SUPABASE_ANON_KEY||'').trim()};
 }
@@ -1842,7 +1843,7 @@ function supabaseDB(sb){
     delete:async ()=>{ const {error}=await sb.from(c).delete().eq('id',id); if(error) throw sbErr(error); recarregar(c); },
   });
   /* tempo real: o técnico acompanha da arquibancada o jogo que outro está marcando */
-  const canal=sb.channel('tcc-competicao');
+  const canal=sb.channel('ponto-a-ponto');
   for(const c of COLS) canal.on('postgres_changes',{event:'*',schema:'public',table:c},()=>recarregar(c));
   canal.subscribe();
   return {
@@ -1858,9 +1859,9 @@ function supabaseDB(sb){
 /* ---------- 3) localStorage (modo de teste) ---------- */
 function localDB(){
   let mem={}; let persist=true;
-  try{ mem=JSON.parse(localStorage.getItem('tccdb')||'{}'); }catch(e){ persist=false; }
+  try{ mem=JSON.parse(localStorage.getItem('pontoapontodb')||localStorage.getItem('tccdb')||'{}'); }catch(e){ persist=false; }
   const ls={};
-  const saveLS=()=>{ if(!persist) return; try{ localStorage.setItem('tccdb',JSON.stringify(mem)); }catch(e){} };
+  const saveLS=()=>{ if(!persist) return; try{ localStorage.setItem('pontoapontodb',JSON.stringify(mem)); }catch(e){} };
   const notify=c=>{ (ls[c]||[]).forEach(f=>f({docs:Object.entries(mem[c]||{}).map(([id,d])=>({id,exists:true,data:()=>d,metadata:{}})),size:0,empty:false,docChanges:()=>[],metadata:{}})); };
   const docRef=(c,id)=>({
     set:async d=>{ (mem[c]=mem[c]||{})[id]=d; saveLS(); notify(c); },

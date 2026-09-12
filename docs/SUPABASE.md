@@ -1,7 +1,6 @@
 # Ligar o banco compartilhado (Supabase) — passo a passo
 
-> Guia do **Ponto a Ponto**, o sistema do Programa de Tênis de Competição do
-> Tênis Clube de Campinas.
+> Guia do **Ponto a Ponto**.
 
 Hoje, aberto pelo GitHub Pages, o sistema roda em **modo local de teste**: o que
 você lança fica salvo só no navegador do seu aparelho. Ninguém mais vê.
@@ -74,7 +73,7 @@ fazer sozinho: abra o `config.js` aqui no GitHub, clique no lápis ✏️, cole 
 dois valores entre as aspas e clique em **Commit changes**.
 
 ```js
-window.TCC_CONFIG = {
+window.APP_CONFIG = {
   SUPABASE_URL: "https://abcdefghijk.supabase.co",
   SUPABASE_ANON_KEY: "eyJhbGciOi..."
 };

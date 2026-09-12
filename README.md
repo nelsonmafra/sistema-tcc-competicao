@@ -1,6 +1,6 @@
 # Ponto a Ponto
 
-O sistema do **Programa de Tênis de Competição do Tênis Clube de Campinas**.
+Sistema de acompanhamento de atletas de tênis de competição.
 
 O nome é o que ele faz: o jogo é marcado ponto a ponto da arquibancada, e é
 daí que sai tudo — o placar, a leitura da pressão, a conversa do intervalo e o
@@ -44,7 +44,3 @@ update / delete / onSnapshot` — com três implementações escolhidas na abert
 No plano gratuito o Supabase pausa o projeto depois de ~7 dias sem acesso. O
 robô [`manter-acordado.yml`](.github/workflows/manter-acordado.yml) consulta o
 banco uma vez por dia e evita isso — e manda e-mail se algo estiver fora do ar.
-
-## Trio técnico
-
-Johan "Yuki" Wachtmeister · Sergio Urbano Luiz · João Guilherme Chiminazzo
