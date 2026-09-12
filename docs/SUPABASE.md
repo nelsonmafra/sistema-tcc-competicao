@@ -112,7 +112,7 @@ Na aba **Acessos** (só você a enxerga), toque em **+ Convidar**:
 | Campo | O que faz |
 | --- | --- |
 | **Quem é a pessoa** | Responsável (vê só o atleta dela), Atleta, ou Treinador (acesso total) |
-| **Atleta que ela vai acompanhar** | Escolha um da lista — ou deixe *"ela mesma cadastra"*, e ela cadastra o filho no primeiro acesso |
+| **Atletas que ela vai acompanhar** | Marque **um ou mais** — quem tem duas filhas no programa acompanha as duas com um acesso só. Se não marcar nenhum, ela cadastra os atletas no primeiro acesso, um depois do outro |
 | **Nome / e-mail** | Só para você lembrar de quem é o convite |
 
 Sai um código de 6 letras (ex.: `K7R2QM`) e a mensagem pronta vai para a área de
@@ -122,8 +122,8 @@ própria senha.
 
 Cada código serve **uma vez só**, e quem já tem acesso não consegue usar outro.
 
-Na mesma aba você vê quem já entrou, troca o papel de alguém, troca o atleta de
-um responsável, ou tira o acesso. Para apagar a conta de vez (e liberar o
+Na mesma aba você vê quem já entrou, troca o papel de alguém, ajusta quais
+atletas um responsável acompanha (botão **atletas…**), ou tira o acesso. Para apagar a conta de vez (e liberar o
 e-mail), aí sim é pelo painel: **Authentication → Users → Delete user**.
 
 ## O que fica onde
@@ -147,9 +147,9 @@ pelo **Table Editor** do Supabase, e exportar em CSV quando quiser.
 
 | | Treinador | Atleta | Responsável | Pendente |
 | --- | --- | --- | --- | --- |
-| Elenco (nomes dos atletas) | tudo | vê todos | só o próprio filho | nada |
-| Jogos | tudo | vê todos; lança e edita os seus | só os do filho, sem editar | nada |
-| Avaliações, Metas, Torneios | tudo | — | só as do filho, sem editar | nada |
+| Elenco (nomes dos atletas) | tudo | vê todos | só os filhos dele | nada |
+| Jogos | tudo | vê todos; lança e edita os seus | só os dos filhos, sem editar | nada |
+| Avaliações, Metas, Torneios | tudo | — | só as dos filhos, sem editar | nada |
 | Relatório do Programa | tudo | — | — | nada |
 | Acessos e convites | tudo | — | — | nada |
 

@@ -444,7 +444,7 @@ function openDlg(title,bodyHtml,onSave,saveLbl){
 /* ================= render ================= */
 function render(){
   if(S.role==='pending'){ rPendente(); return; }
-  if(S.role==='guardian' && !S.meuAtleta){ rPrimeiroAcesso(); return; }
+  if(S.role==='guardian' && (!(S.meusAtletas||[]).length || S.telaCadastro)){ rPrimeiroAcesso(); return; }
   ({painel:rPainel,atletas:rAtletas,avaliacoes:rAval,metas:rMetas,torneios:rTorn,jogos:rJogos,relatorios:rRel,acessos:rAcessos})[S.tab]();
   $('#triLbl').textContent = triLabel(S.tri);
 }
@@ -1052,7 +1052,7 @@ function rJogos(){
    +(S.role!=='guardian'?'<button class="btn sec" onclick="fJogo()">+ Resultado</button><button class="btn" onclick="fJogoLive()">▶ Ao vivo</button>':'')+'</div>'
    +(S.role!=='guardian'
      ?'<div class="mini" style="margin-bottom:10px"><b>▶ Ao vivo</b>: marque ponto a ponto da arquibancada — o placar calcula sozinho e o técnico acompanha em tempo real. <b>+ Resultado</b>: registro rápido de jogo já encerrado.</div>'
-     :'<div class="mini" style="margin-bottom:10px">Os jogos de '+esc(nomeA(S.meuAtleta))+'. Toque em <b>📊</b> para o relatório da partida.</div>');
+     :'<div class="mini" style="margin-bottom:10px">Os jogos de '+esc((S.meusAtletas||[]).map(nomeA).join(' e '))+'. Toque em <b>📊</b> para o relatório da partida.</div>');
   for(const j of andamento){
     const st=computeMatch(j.cfg||{},j.log||[]);
     /* quem não criou a partida só pode assistir — o banco recusaria a gravação dele */
@@ -1123,8 +1123,21 @@ window.relSaveProg=async function(){
 };
 function rRel(){
   if(S.role==='athlete'){ $('#v-relatorios').innerHTML='<div class="empty">Área dos treinadores. Seus relatórios de partida estão na aba Jogos (📊).</div>'; return; }
-  /* o responsável não escolhe: vê o dossiê do próprio filho e nada mais */
-  if(S.role==='guardian'){ S.relView='atleta'; S.relAtleta=S.meuAtleta; rRelAtleta(); return; }
+  /* o responsável não escolhe entre relatórios: vê o dossiê de quem acompanha.
+     Com um atleta só, vai direto; com mais de um, escolhe qual. */
+  if(S.role==='guardian'){
+    const meus=S.meusAtletas||[];
+    if(meus.length===1){ S.relView='atleta'; S.relAtleta=meus[0]; rRelAtleta(); return; }
+    if(S.relView==='atleta' && meus.indexOf(S.relAtleta)>=0){ rRelAtleta(); return; }
+    let h='<div class="sec-head"><h2>Dossiês</h2><span class="cnt">'+triLabel(S.tri)+'</span></div>';
+    for(const id of meus){
+      const a=atleta(id); if(!a) continue;
+      h+='<div class="card"><div class="row"><h3>'+esc(a.nome)+'</h3>'
+        +'<span class="chip clay">'+esc(a.bola||'')+'</span><span class="chip navy">'+esc(a.categoria||'')+'</span>'
+        +'<span style="margin-left:auto"></span><button class="btn sm" onclick="relOpenAtleta({value:\''+id+'\'})">abrir dossiê ›</button></div></div>';
+    }
+    $('#v-relatorios').innerHTML=h; return;
+  }
   if(S.relView==='prog'){ rRelProg(); return; }
   if(S.relView==='atleta'&&S.relAtleta){ rRelAtleta(); return; }
   let h='<div class="sec-head"><h2>Relatórios</h2><span class="cnt">gerados dos lançamentos</span></div>';
@@ -1228,7 +1241,8 @@ function rRelAtleta(){
   if(jgA.length&&agg.df/jgA.length>=6) insights.push('Duplas faltas altas (média de '+fmt(agg.df/jgA.length)+' por jogo) — prioridade de saque no treino.');
   if(v&&(v.criterios||[]).filter(Boolean).length>=4&&v.parecer!=='promovivel') insights.push((v.criterios||[]).filter(Boolean).length+'/5 critérios de promoção demonstrados — candidato a reavaliação de etapa.');
 
-  let h='<div class="sec-head no-print">'+(S.role==='guardian'?'':'<button class="btn sm ghost" onclick="relBack()">‹ relatórios</button>')+'<span style="flex:1"></span><button class="btn sm sec" onclick="relPrint()">🖨 imprimir / PDF</button></div>';
+  const soUm = S.role==='guardian' && (S.meusAtletas||[]).length<2;
+  let h='<div class="sec-head no-print">'+(soUm?'':'<button class="btn sm ghost" onclick="relBack()">‹ '+(S.role==='guardian'?'dossiês':'relatórios')+'</button>')+'<span style="flex:1"></span><button class="btn sm sec" onclick="relPrint()">🖨 imprimir / PDF</button></div>';
   h+='<div class="card"><h3>Dossiê do Atleta — '+triLabel(tri)+'</h3><div class="row" style="margin-top:4px"><b>'+esc(a.nome)+'</b><span class="chip clay">'+esc(a.bola||'')+'</span><span class="chip navy">'+esc(a.categoria||'')+'</span>'+(a.grupo?'<span class="mini">'+esc(a.grupo)+'</span>':'')+'</div></div>';
 
   /* leitura automática */
@@ -2065,19 +2079,34 @@ async function carregarAcessos(){
   try{ render(); }catch(e){ console.error(e); }
 }
 window.acessoPapel=async function(id,papel){
-  const {error}=await S.sb.from('perfis').update({papel,atleta_id:papel==='responsavel'?undefined:null}).eq('id',id);
+  const {error}=await S.sb.from('perfis').update(papel==='responsavel'?{papel}:{papel,atleta_ids:[]}).eq('id',id);
   if(error) return toast(errMsg(sbErr(error)),true);
   toast('Papel alterado ✓'); carregarAcessos();
 };
-window.acessoAtleta=async function(id,atleta_id){
-  const {error}=await S.sb.from('perfis').update({atleta_id:atleta_id||null}).eq('id',id);
-  if(error) return toast(errMsg(sbErr(error)),true);
-  toast('Atleta vinculado ✓'); carregarAcessos();
+/* caixinhas em vez de lista suspensa: no celular dá para marcar mais de um */
+function caixasAtletas(marcados){
+  const m=marcados||[];
+  const lista=ativos();
+  if(!lista.length) return '<div class="mini">Nenhum atleta cadastrado ainda.</div>';
+  return lista.map(a=>'<label class="ck"><input type="checkbox" class="atCk" value="'+a.id+'"'
+    +(m.indexOf(a.id)>=0?' checked':'')+'> '+esc(a.nome)+'</label>').join('');
+}
+const lerCaixas=raiz=>[...raiz.querySelectorAll('.atCk')].filter(c=>c.checked).map(c=>c.value);
+window.fVincular=function(perfilId){
+  const p=(S.perfis||[]).find(x=>x.id===perfilId); if(!p) return;
+  openDlg('Atletas de '+(p.nome||'—'),
+    '<div class="mini">Marque quem esta pessoa pode acompanhar. Pode ser mais de um.</div>'
+    +caixasAtletas(p.atleta_ids||[]),
+    async(dlg)=>{
+      const {error}=await S.sb.from('perfis').update({atleta_ids:lerCaixas(dlg)}).eq('id',perfilId);
+      if(error){ dlgErr(errMsg(sbErr(error))); return false; }
+      toast('Vínculo atualizado ✓'); carregarAcessos(); return true;
+    });
 };
 window.acessoRevogar=async function(id,btn){
   if(btn.dataset.armado!=='1'){ btn.dataset.armado='1'; btn.textContent='confirmar?'; btn.style.color='var(--bad)';
     setTimeout(()=>{ btn.dataset.armado=''; btn.textContent='tirar acesso'; btn.style.color=''; },3000); return; }
-  const {error}=await S.sb.from('perfis').update({papel:'pendente',atleta_id:null}).eq('id',id);
+  const {error}=await S.sb.from('perfis').update({papel:'pendente',atleta_ids:[]}).eq('id',id);
   if(error) return toast(errMsg(sbErr(error)),true);
   toast('Acesso removido'); carregarAcessos();
 };
@@ -2098,21 +2127,21 @@ window.convCopiar=async function(codigo){
   catch(e){ toast('Copie o código à mão: '+codigo,true); }
 };
 window.fConvite=function(){
-  const opc=ativos().map(a=>'<option value="'+a.id+'">'+esc(a.nome)+'</option>').join('');
   openDlg('Convidar alguém',
     '<label>Quem é a pessoa</label><select id="cvPapel">'
       +'<option value="responsavel">Responsável — vê só o atleta dela</option>'
       +'<option value="atleta">Atleta — lança os próprios jogos</option>'
       +'<option value="treinador">Treinador — acesso total</option></select>'
-    +'<div id="cvAtlBox"><label>Atleta que ela vai acompanhar</label>'
-      +'<select id="cvAtleta"><option value="">— ela mesma cadastra o atleta ao entrar —</option>'+opc+'</select></div>'
+    +'<div id="cvAtlBox"><label>Atletas que ela vai acompanhar</label>'
+      +'<div class="mini">Marque um ou mais. Se não marcar nenhum, ela cadastra os atletas no primeiro acesso.</div>'
+      +caixasAtletas([])+'</div>'
     +'<div class="grid2"><div><label>Nome (para você lembrar)</label><input id="cvNome" placeholder="ex.: mãe da Luíza"></div>'
     +'<div><label>E-mail (opcional)</label><input id="cvEmail" type="email"></div></div>'
     +'<div class="mini" style="margin-top:10px">Você recebe um código para mandar por WhatsApp. Quem tiver o código cria a própria senha — e só enxerga o que o convite permite.</div>',
-    async()=>{
+    async(dlg)=>{
       const papel=$('#cvPapel').value;
       const body={codigo:novoCodigo(),papel,
-        atleta_id:papel==='responsavel'?($('#cvAtleta').value||null):null,
+        atleta_ids:papel==='responsavel'?lerCaixas(dlg):[],
         nome:$('#cvNome').value.trim()||null, email:$('#cvEmail').value.trim()||null};
       for(let t=0;t<3;t++){
         const {error}=await S.sb.from('convites').insert(body);
@@ -2126,8 +2155,8 @@ window.fConvite=function(){
 };
 function rAcessos(){
   if(S.perfis==null){ $('#v-acessos').innerHTML='<div class="empty">Carregando…</div>'; carregarAcessos(); return; }
-  const nomeAt=id=>{ const a=S.atletas.find(x=>x.id===id); return a?a.nome:(id?'(atleta removido)':'—'); };
-  const opc=(sel)=>'<option value="">— nenhum —</option>'+ativos().map(a=>'<option value="'+a.id+'"'+(a.id===sel?' selected':'')+'>'+esc(a.nome)+'</option>').join('');
+  const nomeAt=id=>{ const a=S.atletas.find(x=>x.id===id); return a?a.nome:'(atleta removido)'; };
+  const nomesAt=ids=>(ids&&ids.length)?ids.map(nomeAt).join(', '):'nenhum atleta ainda';
   let h='<div class="sec-head"><h2>Acessos</h2><span class="cnt">'+S.perfis.length+' pessoa(s)</span>'
     +'<button class="btn add" onclick="fConvite()">+ Convidar</button></div>';
   if(S.acessoErro) h+='<div class="banner">Não consegui ler os acessos ('+esc(S.acessoErro)+'). Rode de novo o supabase/schema.sql.</div>';
@@ -2138,7 +2167,7 @@ function rAcessos(){
   for(const c of pend){
     h+='<div class="row" style="margin:9px 0;gap:8px"><span class="chip clay" style="font:800 14px var(--font);letter-spacing:1px">'+esc(c.codigo)+'</span>'
       +'<div style="flex:1;min-width:0"><div style="font-size:13.5px">'+esc(c.nome||c.email||PAPEL_LBL[c.papel])+'</div>'
-      +'<div class="mini">'+esc(PAPEL_LBL[c.papel])+(c.papel==='responsavel'?' · '+esc(c.atleta_id?nomeAt(c.atleta_id):'cadastra o atleta ao entrar'):'')+'</div></div>'
+      +'<div class="mini">'+esc(PAPEL_LBL[c.papel])+(c.papel==='responsavel'?' · '+esc((c.atleta_ids&&c.atleta_ids.length)?nomesAt(c.atleta_ids):'cadastra os atletas ao entrar'):'')+'</div></div>'
       +'<button class="btn sm sec" onclick="convCopiar(\''+c.codigo+'\')">copiar</button>'
       +'<button class="btn sm ghost" onclick="convApagar(\''+c.codigo+'\',this)">excluir</button></div>';
   }
@@ -2152,13 +2181,13 @@ function rAcessos(){
       +'<div class="row"><b style="font-size:13.5px">'+esc(p.nome||'(sem nome)')+'</b>'
       +(eu?'<span class="chip clay">você</span>':'')
       +'<span class="chip '+(p.papel==='treinador'?'ok':p.papel==='pendente'?'bad':'navy')+'">'+esc(PAPEL_LBL[p.papel]||p.papel)+'</span>'
-      +(p.papel==='responsavel'?'<span class="mini">→ '+esc(nomeAt(p.atleta_id))+'</span>':'')+'</div>';
+      +(p.papel==='responsavel'?'<span class="mini">→ '+esc(nomesAt(p.atleta_ids))+'</span>':'')+'</div>';
     if(!eu){
       h+='<div class="row" style="margin-top:7px;gap:6px">'
         +'<select onchange="acessoPapel(\''+p.id+'\',this.value)" style="width:auto;flex:1">'
         +['treinador','atleta','responsavel','pendente'].map(v=>'<option value="'+v+'"'+(p.papel===v?' selected':'')+'>'+PAPEL_LBL[v]+'</option>').join('')
         +'</select>'
-        +(p.papel==='responsavel'?'<select onchange="acessoAtleta(\''+p.id+'\',this.value)" style="width:auto;flex:1">'+opc(p.atleta_id)+'</select>':'')
+        +(p.papel==='responsavel'?'<button class="btn sm sec" onclick="fVincular(\''+p.id+'\')">atletas…</button>':'')
         +'<button class="btn sm ghost" onclick="acessoRevogar(\''+p.id+'\',this)">tirar acesso</button></div>';
     } else h+='<div class="mini" style="margin-top:4px">Você é o administrador — o seu próprio acesso não pode ser alterado aqui.</div>';
     h+='</div>';
@@ -2198,20 +2227,34 @@ window.criarMeuAtleta=async function(){
   if(!nome){ $('#maErr').textContent='Informe o nome do atleta.'; return; }
   b.disabled=true; b.textContent='Cadastrando…';
   const dados={nome,nasc:$('#maNasc').value,categoria:$('#maCat').value,bola:$('#maBola').value,ativo:true,ts:Date.now()};
-  const {error}=await S.sb.rpc('cadastrar_meu_atleta',{dados});
+  const {data,error}=await S.sb.rpc('cadastrar_meu_atleta',{dados});
   b.disabled=false; b.textContent='Cadastrar';
-  if(error){ $('#maErr').textContent='Não consegui cadastrar: '+error.message; return; }
-  toast('Atleta cadastrado ✓'); location.reload();
+  if(error){ $('#maErr').textContent=/limite/i.test(error.message||'')?'Você já cadastrou o máximo de atletas. Fale com quem administra.':'Não consegui cadastrar: '+error.message; return; }
+  S.meusAtletas=[...(S.meusAtletas||[]),data];
+  S.cadastrados=[...(S.cadastrados||[]),nome];
+  S.telaCadastro=true; /* fica na tela, para cadastrar o próximo filho */
+  toast('Atleta cadastrado ✓'); render();
 };
+window.concluirCadastro=function(){ S.telaCadastro=false; location.reload(); };
 function rPrimeiroAcesso(){
-  telaSolo('<div class="card" style="margin-top:20px"><h3>Cadastre o seu atleta</h3>'
-    +'<div class="sub" style="margin-top:4px">É o primeiro acesso. Cadastre quem você vai acompanhar — depois disso você verá os jogos e os relatórios dele.</div>'
+  const feitos=S.cadastrados||[];
+  let h='';
+  if(feitos.length){
+    h+='<div class="card" style="margin-top:20px"><h3>'+feitos.length+' atleta(s) cadastrado(s) ✓</h3>'
+      +'<div class="mini" style="margin-top:4px">'+feitos.map(esc).join(' · ')+'</div>'
+      +'<div class="row" style="margin-top:10px"><button class="btn" onclick="concluirCadastro()">Entrar no sistema</button></div></div>';
+  }
+  h+='<div class="card"'+(feitos.length?'':' style="margin-top:20px"')+'><h3>'+(feitos.length?'Cadastrar mais um atleta':'Cadastre o seu atleta')+'</h3>'
+    +'<div class="sub" style="margin-top:4px">'+(feitos.length
+        ?'Se você acompanha mais de um filho, cadastre o próximo aqui.'
+        :'É o primeiro acesso. Cadastre quem você vai acompanhar — se for mais de um, dá para cadastrar os outros na sequência.')+'</div>'
     +'<label for="maNome">Nome completo</label><input id="maNome">'
     +'<div class="grid2"><div><label>Nascimento</label><input id="maNasc" type="date"></div>'
     +'<div><label>Categoria</label><select id="maCat">'+selOpts(CATEGORIAS)+'</select></div></div>'
     +'<label>Bola / etapa</label><select id="maBola">'+selOpts(BOLAS,'Amarela')+'</select>'
     +'<div class="dlg-err" id="maErr" style="padding-left:0"></div>'
-    +'<div class="row" style="margin-top:8px"><button class="btn" id="maOk" onclick="criarMeuAtleta()">Cadastrar</button></div></div>');
+    +'<div class="row" style="margin-top:8px"><button class="btn" id="maOk" onclick="criarMeuAtleta()">Cadastrar</button></div></div>';
+  telaSolo(h);
 }
 
 /* ================= papéis ================= */
@@ -2250,7 +2293,7 @@ async function entrarNoClube(){
   const user=ru&&ru.data&&ru.data.user;
   if(!user){ const e=new Error('sem sessão'); e.code='unauthenticated'; throw e; }
   S.uid=user.id;
-  let papel='pendente', nome='', meuAtleta=null;
+  let papel='pendente', nome='', meusAtletas=[];
   /* o Supabase devolve o erro DENTRO da resposta: se não olharmos, um treinador
      entra rebaixado sem ninguém avisar. Por isso o aviso explícito.
      select('*') e não a lista de colunas: assim a página continua funcionando
@@ -2259,9 +2302,9 @@ async function entrarNoClube(){
   if(rp.error||!rp.data){
     console.error('perfis',rp.error);
     bannerLocal('Entrei no banco, mas não consegui ler o seu perfil'+(rp.error?' ('+[rp.error.code,rp.error.message].filter(Boolean).join(' ')+')':' — seu usuário não tem linha na tabela perfis')+'. Por segurança você está sem acesso. Toque na bolinha ao lado do título para o diagnóstico.');
-  } else { papel=rp.data.papel||'pendente'; nome=rp.data.nome||''; meuAtleta=rp.data.atleta_id||null; }
+  } else { papel=rp.data.papel||'pendente'; nome=rp.data.nome||''; meusAtletas=rp.data.atleta_ids||[]; }
   S.role = PAPEL_ROLE[papel] || 'pending';
-  S.meuAtleta=meuAtleta; S.nome=nome; S.perfis=null;
+  S.meusAtletas=meusAtletas; S.nome=nome; S.perfis=null;
   $('#login').hidden=true; document.body.classList.remove('trancado');
   $('#st').classList.add('on');
   $('#st').title='Banco do clube · '+(nome||user.email)+' · '+papel;

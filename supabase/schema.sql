@@ -32,7 +32,17 @@ create table if not exists public.perfis (
 -- papéis: treinador (tudo), atleta, responsavel (só o próprio filho) e
 -- pendente — quem criou conta e ainda não usou um convite. Pendente é o novo
 -- padrão: conta sem convite não enxerga absolutamente nada.
-alter table public.perfis add column if not exists atleta_id text;
+-- um responsável pode acompanhar mais de um filho, então o vínculo é lista
+alter table public.perfis add column if not exists atleta_ids text[] not null default '{}';
+do $$
+begin
+  if exists (select 1 from information_schema.columns
+              where table_schema='public' and table_name='perfis' and column_name='atleta_id') then
+    update public.perfis set atleta_ids = array[atleta_id]
+     where atleta_id is not null and atleta_ids = '{}';
+    alter table public.perfis drop column atleta_id;
+  end if;
+end $$;
 alter table public.perfis drop constraint if exists perfis_papel_check;
 alter table public.perfis add constraint perfis_papel_check
   check (papel in ('treinador','atleta','responsavel','pendente'));
@@ -61,10 +71,10 @@ returns text language sql stable security definer set search_path = public as $$
   select coalesce((select p.papel from public.perfis p where p.id = auth.uid()), 'pendente');
 $$;
 
--- qual atleta este usuário pode ver (vazio para treinador e atleta)
-create or replace function public.meu_atleta()
-returns text language sql stable security definer set search_path = public as $$
-  select p.atleta_id from public.perfis p where p.id = auth.uid();
+-- quais atletas este usuário pode ver (vazio para treinador e atleta)
+create or replace function public.meus_atletas()
+returns text[] language sql stable security definer set search_path = public as $$
+  select coalesce((select p.atleta_ids from public.perfis p where p.id = auth.uid()), '{}');
 $$;
 
 -- permissão explícita: sem isto, ler a própria linha de perfis pode ser
@@ -127,7 +137,7 @@ drop policy if exists "ler elenco" on public.atletas;
 create policy "ler elenco" on public.atletas
   for select to authenticated
   using ( public.papel() = 'atleta'
-          or (public.papel() = 'responsavel' and id = public.meu_atleta()) );
+          or (public.papel() = 'responsavel' and id = any(public.meus_atletas())) );
 
 -- jogos: o atleta vê todos; o responsável, só os do filho
 drop policy if exists "atleta: ler jogos" on public.jogos;
@@ -135,7 +145,7 @@ drop policy if exists "ler jogos" on public.jogos;
 create policy "ler jogos" on public.jogos
   for select to authenticated
   using ( public.papel() = 'atleta'
-          or (public.papel() = 'responsavel' and data->>'atletaId' = public.meu_atleta()) );
+          or (public.papel() = 'responsavel' and data->>'atletaId' = any(public.meus_atletas())) );
 
 -- o dossiê do filho: avaliações, metas e análises de torneio dele, só leitura.
 -- É o documento que já era feito para a conversa com a família.
@@ -146,9 +156,12 @@ begin
     execute format('drop policy if exists "responsavel: do filho" on public.%I', t);
     execute format('create policy "responsavel: do filho" on public.%I'
       || ' for select to authenticated'
-      || ' using (public.papel() = ''responsavel'' and data->>''atletaId'' = public.meu_atleta())', t);
+      || ' using (public.papel() = ''responsavel'' and data->>''atletaId'' = any(public.meus_atletas()))', t);
   end loop;
 end $$;
+
+-- a função antiga sai só depois que nenhuma política a usa mais
+drop function if exists public.meu_atleta();
 
 -- lança os próprios jogos. O papel entra na condição de propósito: sem ele,
 -- QUALQUER conta autenticada — inclusive uma recém-criada, ainda sem convite —
@@ -173,7 +186,7 @@ create policy "atleta: editar o proprio jogo" on public.jogos
 -- código — e é o resgate do código que dá o acesso, não o cadastro.
 create table if not exists public.convites (
   codigo     text primary key,
-  atleta_id  text,
+  atleta_id  text,   -- coluna antiga; migrada para atleta_ids logo abaixo
   nome       text,
   email      text,
   papel      text not null default 'responsavel'
@@ -183,6 +196,16 @@ create table if not exists public.convites (
   usado_em   timestamptz,
   usado_por  uuid references auth.users(id) on delete set null
 );
+alter table public.convites add column if not exists atleta_ids text[] not null default '{}';
+do $$
+begin
+  if exists (select 1 from information_schema.columns
+              where table_schema='public' and table_name='convites' and column_name='atleta_id') then
+    update public.convites set atleta_ids = array[atleta_id]
+     where atleta_id is not null and atleta_ids = '{}';
+    alter table public.convites drop column atleta_id;
+  end if;
+end $$;
 alter table public.convites enable row level security;
 grant select, insert, update, delete on public.convites to authenticated;
 revoke all on public.convites from anon;
@@ -222,14 +245,14 @@ begin
     on conflict (id) do nothing;
   update public.perfis
      set papel = c.papel,
-         atleta_id = c.atleta_id,
+         atleta_ids = c.atleta_ids,
          nome = coalesce(nullif(btrim(nome_pessoa),''), nome)
    where id = auth.uid();
   update public.convites
      set usado_em = now(), usado_por = auth.uid()
    where codigo = c.codigo;
 
-  return jsonb_build_object('papel', c.papel, 'atleta_id', c.atleta_id);
+  return jsonb_build_object('papel', c.papel, 'atleta_ids', c.atleta_ids);
 end $$;
 grant execute on function public.resgatar_convite(text, text) to authenticated;
 
@@ -246,11 +269,11 @@ begin
   if meu_papel is distinct from 'responsavel' then
     raise exception 'sem permissao' using errcode = '42501';
   end if;
-  if (select atleta_id from public.perfis where id = auth.uid()) is not null then
-    raise exception 'ja existe atleta vinculado' using errcode = '22023';
+  if coalesce(array_length((select atleta_ids from public.perfis where id = auth.uid()), 1), 0) >= 5 then
+    raise exception 'limite de atletas atingido' using errcode = '22023';
   end if;
   insert into public.atletas (data) values (dados) returning id into novo;
-  update public.perfis set atleta_id = novo where id = auth.uid();
+  update public.perfis set atleta_ids = atleta_ids || novo where id = auth.uid();
   return novo;
 end $$;
 grant execute on function public.cadastrar_meu_atleta(jsonb) to authenticated;
@@ -273,7 +296,7 @@ end $$;
 
 grant execute on function public.doc_merge(text, text, jsonb) to authenticated;
 grant execute on function public.papel() to authenticated;
-grant execute on function public.meu_atleta() to authenticated;
+grant execute on function public.meus_atletas() to authenticated;
 
 
 -- 5) TEMPO REAL --------------------------------------------------------
