@@ -1,6 +1,10 @@
-# Sistema TCC Competição
+# Ponto a Ponto
 
-Aplicativo do **Programa de Tênis de Competição do Tênis Clube de Campinas**.
+O sistema do **Programa de Tênis de Competição do Tênis Clube de Campinas**.
+
+O nome é o que ele faz: o jogo é marcado ponto a ponto da arquibancada, e é
+daí que sai tudo — o placar, a leitura da pressão, a conversa do intervalo e o
+dossiê do atleta.
 Uma página só (`index.html`), sem instalação: abre no celular na beira da quadra
 e no computador do treinador.
 

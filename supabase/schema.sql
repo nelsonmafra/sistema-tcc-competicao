@@ -1,5 +1,5 @@
 -- =====================================================================
--- Sistema TCC Competição — banco no Supabase
+-- Ponto a Ponto — banco no Supabase
 --
 -- COMO USAR: abra o seu projeto no supabase.com, clique em "SQL Editor",
 -- cole este arquivo inteiro e clique em RUN. Pode rodar de novo quantas

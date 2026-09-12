@@ -1,5 +1,5 @@
 /* ---------------------------------------------------------------------
-   Ligação com o banco do clube (Supabase).
+   Ponto a Ponto — ligação com o banco do clube (Supabase).
 
    Enquanto estes dois campos estiverem vazios, o app roda em MODO LOCAL DE
    TESTE: os dados ficam salvos só no navegador de quem abriu, e ninguém vê o

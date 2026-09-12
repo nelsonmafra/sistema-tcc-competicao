@@ -1,5 +1,8 @@
 # Ligar o banco compartilhado (Supabase) — passo a passo
 
+> Guia do **Ponto a Ponto**, o sistema do Programa de Tênis de Competição do
+> Tênis Clube de Campinas.
+
 Hoje, aberto pelo GitHub Pages, o sistema roda em **modo local de teste**: o que
 você lança fica salvo só no navegador do seu aparelho. Ninguém mais vê.
 
@@ -167,7 +170,7 @@ acordado*. Se alguma execução falhar, o GitHub te manda um e-mail.
 
 ## A bolinha ao lado do título
 
-No topo do app, ao lado de "TCC Competição", há uma bolinha:
+No topo do app, ao lado de "Ponto a Ponto", há uma bolinha:
 **verde** = conectado ao banco, **amarela** = não conectado.
 
 **Toque nela** para abrir o *Diagnóstico do banco*. Ele testa, em ordem:
