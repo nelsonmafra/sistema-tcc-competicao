@@ -378,7 +378,7 @@ function camposPartida(j){
     +'<div><label>Clube do adversário</label><input id="fClube" placeholder="opcional" value="'+esc(j.clubeAdv||'')+'"></div></div>'
     +'<div class="grid2"><div><label>Categoria</label><select id="fCatJ">'+selOpts(CATEGORIAS,j.categoria)+'</select></div>'
     +'<div><label>Data</label><input id="fData" type="date" value="'+esc(j.data||new Date().toISOString().slice(0,10))+'"></div></div>'
-    +'<label>Local / clube-sede</label><input id="fLocal" placeholder="ex.: Tênis Clube de Campinas" value="'+esc(j.local||'')+'">'
+    +'<label>Local / clube-sede</label><input id="fLocal" placeholder="clube ou cidade onde foi o jogo" value="'+esc(j.local||'')+'">'
     +'<label>Torneio</label><input id="fTorneio" placeholder="ex.: FPT 3ª classe — Etapa Campinas" value="'+esc(j.torneio||'')+'">'
     +'<div class="grid2"><div><label>Rodada</label><select id="fRodada">'+selOpts(RODADAS,j.rodada)+'</select></div>'
     +'<div><label>Piso</label><select id="fQuadra">'+selOpts(QUADRAS,j.quadra||'Saibro')+'</select></div></div>'
@@ -891,7 +891,7 @@ function rReport(){
   let h='<div class="sec-head no-print"><button class="btn sm ghost" onclick="repClose()">‹ jogos</button>'
     +'<h2 style="font-size:16px">Relatório da partida</h2><span style="flex:1"></span>'
     +'<button class="btn sm sec" onclick="repPrint()">🖨 imprimir / PDF</button></div>'
-    +'<div class="print-cab">Ponto a Ponto · Tênis Clube de Campinas · Programa de Tênis de Competição</div>';
+    +'<div class="print-cab">Relatório da partida</div>';
   h+='<div class="card"><div class="row"><h3>'+esc(nome)+' × '+esc(adv)+'</h3>'
     +(j.resultado==='V'?'<span class="chip ok">V</span>':j.resultado==='D'?'<span class="chip bad">D</span>':'<span class="chip warn">'+(j.finalizado===false?'em andamento':'interrompida')+'</span>')
     +'</div><div class="sub">'+esc(j.placar||placarStr(computeMatch(j.cfg||{},j.log||[])))+(j.torneio?' · '+esc(j.torneio):'')+(j.data?' · '+esc(j.data):'')+'</div>'
@@ -1121,7 +1121,7 @@ function rRelProg(){
   const saved=S.relatorios.find(r=>r.id===tri)||{};
   const pct=(n,d)=>d?Math.round(100*n/d)+'%':'—';
   let h='<div class="sec-head no-print"><button class="btn sm ghost" onclick="relBack()">‹ relatórios</button><span style="flex:1"></span><button class="btn sm sec" onclick="relPrint()">🖨 imprimir / PDF</button></div>';
-  h+='<div class="card"><h3>Relatório Trimestral do Programa — '+triLabel(tri)+'</h3><div class="sub">Tênis Clube de Campinas · Programa de Tênis de Competição · gerado automaticamente dos lançamentos</div></div>';
+  h+='<div class="card"><h3>Relatório Trimestral do Programa — '+triLabel(tri)+'</h3><div class="sub">Gerado automaticamente dos lançamentos</div></div>';
   h+='<div class="card"><h3>1. KPIs do trimestre</h3><div class="scroll"><table class="tbl">'
     +'<tr><th>Indicador</th><th>Realizado</th></tr>'
     +'<tr><td>Atletas ativos no programa</td><td>'+at.length+'</td></tr>'
