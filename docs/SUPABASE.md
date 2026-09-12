@@ -88,33 +88,43 @@ Um minuto depois de salvar, o site já pede e-mail e senha para entrar.
 
 ---
 
-## Passo 5 — Dar acesso ao resto da equipe
+## Passo 5 — Ligar o cadastro por convite
 
-Para cada treinador ou atleta, repita o **Passo 3.1** (Authentication → Users →
-Add user, com `Auto Confirm User` marcado) e passe o e-mail e a senha para a
-pessoa.
+O app cria os usuários sozinho, por **código de convite**. Para isso o Supabase
+precisa aceitar auto-cadastro — e duas configurações precisam estar assim:
 
-- **Atleta**: não precisa fazer mais nada. Ele entra vendo só a aba **Jogos** —
-  lança as partidas dele e abre os relatórios de partida (📊).
-- Cada um troca a própria senha depois, pelo botão **conta** no topo do app —
-  você não precisa entrar no painel do Supabase para isso.
-- **Treinador**: rode de novo o SQL do Passo 3.3 com o e-mail dele.
+1. **Authentication** → **Sign In / Providers** → **Email**
+2. **Ligue** *Allow new users to sign up*
+3. **Desligue** *Confirm email* — senão cada pessoa teria de esperar um e-mail
+   de confirmação, e o envio gratuito do Supabase é limitado a poucos por hora
+4. **Save**
 
-Para tirar o acesso de alguém: **Authentication** → **Users** → os três
-pontinhos ao lado do nome → **Delete user**.
+> **"Mas assim qualquer um cria conta!"** Cria — e não vê **nada**. Conta nova
+> nasce com o papel **pendente**, que não enxerga uma linha sequer do banco.
+> Quem dá o acesso é o código do convite, e o código diz qual é o papel e qual
+> é o atleta. Isso é decidido dentro do banco, não na tela: nem o navegador nem
+> a pessoa conseguem mudar o próprio papel.
 
----
+## Passo 6 — Convidar as pessoas (tudo pelo app)
 
-## Passo 6 (recomendado) — Fechar o cadastro público
+Na aba **Acessos** (só você a enxerga), toque em **+ Convidar**:
 
-Para que ninguém crie conta sozinho:
+| Campo | O que faz |
+| --- | --- |
+| **Quem é a pessoa** | Responsável (vê só o atleta dela), Atleta, ou Treinador (acesso total) |
+| **Atleta que ela vai acompanhar** | Escolha um da lista — ou deixe *"ela mesma cadastra"*, e ela cadastra o filho no primeiro acesso |
+| **Nome / e-mail** | Só para você lembrar de quem é o convite |
 
-**Authentication** → **Sign In / Providers** → **Email** → desligue
-**Allow new users to sign up** → **Save**.
+Sai um código de 6 letras (ex.: `K7R2QM`) e a mensagem pronta vai para a área de
+transferência — é só colar no WhatsApp. A pessoa abre o link, toca em
+**"Primeiro acesso? Tenho um código de convite"**, digita o código e escolhe a
+própria senha.
 
-A partir daí só entra quem você criou na mão.
+Cada código serve **uma vez só**, e quem já tem acesso não consegue usar outro.
 
----
+Na mesma aba você vê quem já entrou, troca o papel de alguém, troca o atleta de
+um responsável, ou tira o acesso. Para apagar a conta de vez (e liberar o
+e-mail), aí sim é pelo painel: **Authentication → Users → Delete user**.
 
 ## O que fica onde
 
@@ -128,17 +138,20 @@ A partir daí só entra quem você criou na mão.
 | `jogos` | Jogos, inclusive a marcação ponto a ponto |
 | `relatorios` | textos do Relatório Trimestral do Programa |
 | `pulso` | só um horário, usado pelo robô que impede o banco de hibernar |
+| `convites` | os códigos de convite e o que cada um libera |
 
 Cada linha guarda um documento em JSON na coluna `data`. Você pode olhar tudo
 pelo **Table Editor** do Supabase, e exportar em CSV quando quiser.
 
 ## Quem pode o quê
 
-| | Treinador | Atleta |
-| --- | --- | --- |
-| Atletas, Avaliações, Metas, Torneios, Relatórios | ver e editar | — |
-| Elenco (nomes dos atletas) | ver e editar | ver |
-| Jogos | ver, editar e apagar todos | ver todos; lançar e editar só os seus |
+| | Treinador | Atleta | Responsável | Pendente |
+| --- | --- | --- | --- | --- |
+| Elenco (nomes dos atletas) | tudo | vê todos | só o próprio filho | nada |
+| Jogos | tudo | vê todos; lança e edita os seus | só os do filho, sem editar | nada |
+| Avaliações, Metas, Torneios | tudo | — | só as do filho, sem editar | nada |
+| Relatório do Programa | tudo | — | — | nada |
+| Acessos e convites | tudo | — | — | nada |
 
 Isso é garantido pelo **banco**, não pela tela: mesmo que alguém tente burlar o
 app, o Postgres recusa. As regras estão no fim do `supabase/schema.sql`.

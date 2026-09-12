@@ -26,6 +26,12 @@ O trimestre exibido é escolhido pelas setas `‹ ›` no topo — todo o sistem
 
 - **Treinador** — acesso total a todos os módulos.
 - **Atleta** — vê apenas a aba Jogos: lança as próprias partidas e abre os relatórios de partida (📊).
+- **Responsável** — vê apenas o atleta vinculado a ele: os jogos dele e o dossiê
+  dele, sem poder alterar nada.
+- **Pendente** — conta criada e ainda sem convite: não enxerga uma linha sequer.
+
+Usuários nascem pela aba **Acessos**, com código de convite. O código diz o
+papel e o atleta, e é o banco que aplica — ninguém muda o próprio papel.
 
 O botão **conta**, no topo, mostra com quem você está conectado, troca a sua
 senha e sai da conta.

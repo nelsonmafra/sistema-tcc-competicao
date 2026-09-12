@@ -28,9 +28,19 @@ create table if not exists public.perfis (
   papel     text not null default 'atleta' check (papel in ('treinador','atleta')),
   criado_em timestamptz not null default now()
 );
+
+-- papéis: treinador (tudo), atleta, responsavel (só o próprio filho) e
+-- pendente — quem criou conta e ainda não usou um convite. Pendente é o novo
+-- padrão: conta sem convite não enxerga absolutamente nada.
+alter table public.perfis add column if not exists atleta_id text;
+alter table public.perfis drop constraint if exists perfis_papel_check;
+alter table public.perfis add constraint perfis_papel_check
+  check (papel in ('treinador','atleta','responsavel','pendente'));
+alter table public.perfis alter column papel set default 'pendente';
 alter table public.perfis enable row level security;
 
--- todo usuário novo entra como atleta; o treinador promove depois (passo 5)
+-- todo usuário novo entra como PENDENTE, sem acesso a nada; quem tem convite
+-- é promovido na hora em que o resgata (ver resgatar_convite, mais abaixo)
 create or replace function public.criar_perfil()
 returns trigger language plpgsql security definer set search_path = public as $$
 begin
@@ -48,7 +58,13 @@ create trigger ao_criar_usuario after insert on auth.users
 -- perfis sem cair na própria regra de acesso da tabela perfis.
 create or replace function public.papel()
 returns text language sql stable security definer set search_path = public as $$
-  select coalesce((select p.papel from public.perfis p where p.id = auth.uid()), 'atleta');
+  select coalesce((select p.papel from public.perfis p where p.id = auth.uid()), 'pendente');
+$$;
+
+-- qual atleta este usuário pode ver (vazio para treinador e atleta)
+create or replace function public.meu_atleta()
+returns text language sql stable security definer set search_path = public as $$
+  select p.atleta_id from public.perfis p where p.id = auth.uid();
 $$;
 
 -- permissão explícita: sem isto, ler a própria linha de perfis pode ser
@@ -103,28 +119,141 @@ begin
 end $$;
 
 
--- 3) O QUE O ATLETA PODE ----------------------------------------------
--- lê o elenco, para saber de quem é cada jogo
+-- 3) O QUE CADA PAPEL PODE --------------------------------------------
+-- ATLETA: lê o elenco inteiro (para saber de quem é cada jogo).
+-- RESPONSÁVEL: lê somente o atleta vinculado a ele. Nada mais.
 drop policy if exists "atleta: ler elenco" on public.atletas;
-create policy "atleta: ler elenco" on public.atletas
-  for select to authenticated using (true);
+drop policy if exists "ler elenco" on public.atletas;
+create policy "ler elenco" on public.atletas
+  for select to authenticated
+  using ( public.papel() = 'atleta'
+          or (public.papel() = 'responsavel' and id = public.meu_atleta()) );
 
--- lê os jogos (é o que abre os relatórios de partida)
+-- jogos: o atleta vê todos; o responsável, só os do filho
 drop policy if exists "atleta: ler jogos" on public.jogos;
-create policy "atleta: ler jogos" on public.jogos
-  for select to authenticated using (true);
+drop policy if exists "ler jogos" on public.jogos;
+create policy "ler jogos" on public.jogos
+  for select to authenticated
+  using ( public.papel() = 'atleta'
+          or (public.papel() = 'responsavel' and data->>'atletaId' = public.meu_atleta()) );
 
--- lança os próprios jogos...
+-- o dossiê do filho: avaliações, metas e análises de torneio dele, só leitura.
+-- É o documento que já era feito para a conversa com a família.
+do $$
+declare t text;
+begin
+  foreach t in array array['avaliacoes','metas','torneios'] loop
+    execute format('drop policy if exists "responsavel: do filho" on public.%I', t);
+    execute format('create policy "responsavel: do filho" on public.%I'
+      || ' for select to authenticated'
+      || ' using (public.papel() = ''responsavel'' and data->>''atletaId'' = public.meu_atleta())', t);
+  end loop;
+end $$;
+
+-- lança os próprios jogos. O papel entra na condição de propósito: sem ele,
+-- QUALQUER conta autenticada — inclusive uma recém-criada, ainda sem convite —
+-- conseguiria gravar jogos, bastando ser a autora da linha.
 drop policy if exists "atleta: lancar jogo" on public.jogos;
 create policy "atleta: lancar jogo" on public.jogos
-  for insert to authenticated with check (criado_por = auth.uid());
+  for insert to authenticated
+  with check (public.papel() = 'atleta' and criado_por = auth.uid());
 
 -- ...e edita só o que ele mesmo lançou (a marcação ponto a ponto ao vivo).
 -- Não existe regra de exclusão para atleta: apagar jogo é só do treinador.
 drop policy if exists "atleta: editar o proprio jogo" on public.jogos;
 create policy "atleta: editar o proprio jogo" on public.jogos
   for update to authenticated
-  using (criado_por = auth.uid()) with check (criado_por = auth.uid());
+  using  (public.papel() = 'atleta' and criado_por = auth.uid())
+  with check (public.papel() = 'atleta' and criado_por = auth.uid());
+
+
+-- 3b) CONVITES: como nascem os usuários novos ------------------------
+-- O treinador cria um convite com um código curto e (opcionalmente) o atleta
+-- que a pessoa vai acompanhar. A pessoa se cadastra sozinha no app usando o
+-- código — e é o resgate do código que dá o acesso, não o cadastro.
+create table if not exists public.convites (
+  codigo     text primary key,
+  atleta_id  text,
+  nome       text,
+  email      text,
+  papel      text not null default 'responsavel'
+             check (papel in ('responsavel','atleta','treinador')),
+  criado_por uuid default auth.uid() references auth.users(id) on delete set null,
+  criado_em  timestamptz not null default now(),
+  usado_em   timestamptz,
+  usado_por  uuid references auth.users(id) on delete set null
+);
+alter table public.convites enable row level security;
+grant select, insert, update, delete on public.convites to authenticated;
+revoke all on public.convites from anon;
+
+-- só o treinador enxerga e administra convites. Quem resgata não precisa ler
+-- a tabela: quem lê é a função abaixo, em nome dele.
+drop policy if exists "convites: treinador" on public.convites;
+create policy "convites: treinador" on public.convites
+  for all to authenticated
+  using (public.papel() = 'treinador') with check (public.papel() = 'treinador');
+
+-- Resgate. É "security definer" de propósito: sem isto, o próprio usuário
+-- precisaria poder editar o seu papel — e aí qualquer um se promoveria a
+-- treinador. Aqui ele não escolhe nada: o papel e o atleta vêm do convite.
+create or replace function public.resgatar_convite(cod text, nome_pessoa text default null)
+returns jsonb language plpgsql security definer set search_path = public as $$
+declare c public.convites;
+begin
+  if auth.uid() is null then
+    raise exception 'precisa estar logado' using errcode = '42501';
+  end if;
+  select * into c from public.convites where upper(codigo) = upper(btrim(cod));
+  if not found then
+    raise exception 'convite nao encontrado' using errcode = '22023';
+  end if;
+  if c.usado_em is not null then
+    raise exception 'convite ja utilizado' using errcode = '22023';
+  end if;
+  -- só quem ainda não tem acesso resgata. Sem isto, quem já entrou poderia
+  -- usar um segundo código para trocar de atleta — ou virar treinador, se um
+  -- código de treinador vazasse.
+  if coalesce((select papel from public.perfis where id = auth.uid()), 'pendente') <> 'pendente' then
+    raise exception 'este usuario ja tem acesso' using errcode = '22023';
+  end if;
+
+  insert into public.perfis (id, nome) values (auth.uid(), nullif(btrim(nome_pessoa),''))
+    on conflict (id) do nothing;
+  update public.perfis
+     set papel = c.papel,
+         atleta_id = c.atleta_id,
+         nome = coalesce(nullif(btrim(nome_pessoa),''), nome)
+   where id = auth.uid();
+  update public.convites
+     set usado_em = now(), usado_por = auth.uid()
+   where codigo = c.codigo;
+
+  return jsonb_build_object('papel', c.papel, 'atleta_id', c.atleta_id);
+end $$;
+grant execute on function public.resgatar_convite(text, text) to authenticated;
+
+-- Convite sem atleta: a pessoa cadastra o filho no primeiro acesso. Também
+-- security definer, para que ela não possa se vincular a um atleta alheio.
+create or replace function public.cadastrar_meu_atleta(dados jsonb)
+returns text language plpgsql security definer set search_path = public as $$
+declare novo text; meu_papel text;
+begin
+  if auth.uid() is null then
+    raise exception 'precisa estar logado' using errcode = '42501';
+  end if;
+  select papel into meu_papel from public.perfis where id = auth.uid();
+  if meu_papel is distinct from 'responsavel' then
+    raise exception 'sem permissao' using errcode = '42501';
+  end if;
+  if (select atleta_id from public.perfis where id = auth.uid()) is not null then
+    raise exception 'ja existe atleta vinculado' using errcode = '22023';
+  end if;
+  insert into public.atletas (data) values (dados) returning id into novo;
+  update public.perfis set atleta_id = novo where id = auth.uid();
+  return novo;
+end $$;
+grant execute on function public.cadastrar_meu_atleta(jsonb) to authenticated;
 
 
 -- 4) ALTERAÇÃO PARCIAL DE UM DOCUMENTO --------------------------------
@@ -144,6 +273,7 @@ end $$;
 
 grant execute on function public.doc_merge(text, text, jsonb) to authenticated;
 grant execute on function public.papel() to authenticated;
+grant execute on function public.meu_atleta() to authenticated;
 
 
 -- 5) TEMPO REAL --------------------------------------------------------
