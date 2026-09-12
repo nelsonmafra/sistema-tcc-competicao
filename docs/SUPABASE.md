@@ -96,6 +96,8 @@ pessoa.
 
 - **Atleta**: não precisa fazer mais nada. Ele entra vendo só a aba **Jogos** —
   lança as partidas dele e abre os relatórios de partida (📊).
+- Cada um troca a própria senha depois, pelo botão **conta** no topo do app —
+  você não precisa entrar no painel do Supabase para isso.
 - **Treinador**: rode de novo o SQL do Passo 3.3 com o e-mail dele.
 
 Para tirar o acesso de alguém: **Authentication** → **Users** → os três
@@ -184,7 +186,7 @@ texto. Não precisa entender o conteúdo.
 
 | O que aparece | O que fazer |
 | --- | --- |
-| "E-mail ou senha incorretos" | Confira o e-mail. Para trocar a senha: Authentication → Users → três pontinhos → *Reset password*. |
+| "E-mail ou senha incorretos" | Confira o e-mail. Quem **lembra** a senha troca sozinho no app (botão **conta**, no topo). Quem **esqueceu** precisa de você: Authentication → Users → três pontinhos → *Reset password*. |
 | "E-mail ainda não confirmado" | O usuário foi criado sem `Auto Confirm User`. Apague e crie de novo com a opção marcada. |
 | "Seu perfil não tem permissão para esta ação" | A pessoa está como atleta. Rode o SQL do Passo 3.3 com o e-mail dela. |
 | A tela de login não aparece | O `config.js` está vazio ou com um valor errado. Confira se a URL começa com `https://` e se a chave é a **anon**/publishable, não a `service_role`. |

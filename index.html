@@ -252,7 +252,7 @@ body.trancado{overflow:hidden}
 #login .lg-sub{color:var(--muted);font-size:12.5px;margin:4px 0 6px}
 #login button{width:100%;margin-top:16px}
 #lgErr{padding:8px 0 0}
-#sair{margin-left:8px}
+#conta{margin-left:8px}
 </style>
 
 <header>
@@ -263,7 +263,7 @@ body.trancado{overflow:hidden}
     <div class="tri-label" id="triLbl"></div>
     <button id="triNext" aria-label="Próximo trimestre">›</button>
   </div>
-  <button class="btn sm ghost" id="sair" hidden>sair</button>
+  <button class="btn sm ghost" id="conta" hidden>conta</button>
 </header>
 
 <nav id="nav">
@@ -1963,6 +1963,52 @@ window.abrirDiagnostico=async function(){
   });
 };
 
+/* ---------- MINHA CONTA: trocar a própria senha e sair ----------
+   Sem isto, trocar senha exigiria abrir o painel do Supabase — o que nenhum
+   treinador ou atleta vai fazer. Aqui cada um troca a sua. */
+window.abrirConta=function(){
+  if(!S.sb){ toast('Disponível apenas com o banco do clube ligado.',true); return; }
+  const dlg=$('#dlg');
+  $('#dlgInner').innerHTML='<div class="dlg-h"><h3>Minha conta</h3><button id="dlgX" aria-label="Fechar">✕</button></div>'
+    +'<div class="dlg-b">'
+    +'<div class="mini">Conectado como <b>'+esc(S.email||'')+'</b> · '+(S.role==='coach'?'treinador':'atleta')+'</div>'
+    +'<label for="cnNova">Nova senha</label>'
+    +'<input id="cnNova" type="password" autocomplete="new-password" placeholder="ao menos 8 caracteres">'
+    +'<label for="cnConf">Repita a nova senha</label>'
+    +'<input id="cnConf" type="password" autocomplete="new-password">'
+    +'<div class="mini" style="margin-top:10px">Depois de trocar, este aparelho continua conectado. Nos outros, será preciso entrar de novo com a senha nova.</div>'
+    +'</div>'
+    +'<div class="dlg-err" id="dlgErrBox"></div>'
+    +'<div class="dlg-f"><button class="btn ghost" id="cnSair">Sair da conta</button>'
+    +'<span style="flex:1"></span><button class="btn" id="cnOk">Trocar senha</button></div>';
+  $('#dlgX').onclick=()=>dlg.close();
+  $('#cnSair').onclick=async()=>{ try{ await S.sb.auth.signOut(); }catch(e){} location.reload(); };
+  $('#cnOk').onclick=async()=>{
+    const b=$('#cnOk'), nova=$('#cnNova').value, conf=$('#cnConf').value;
+    $('#dlgErrBox').textContent='';
+    if(nova.length<8){ dlgErr('A senha nova precisa ter ao menos 8 caracteres.'); return; }
+    if(nova!==conf){ dlgErr('As duas senhas não são iguais.'); return; }
+    b.disabled=true; const lbl=b.textContent; b.textContent='Trocando…';
+    let error=null;
+    try{ ({error}=await S.sb.auth.updateUser({password:nova})); }catch(e){ error=e; }
+    b.disabled=false; b.textContent=lbl;
+    if(error){
+      const m=String(error.message||'');
+      dlgErr(
+        /different|same as/i.test(m) ? 'A senha nova precisa ser diferente da atual.'
+        : /reauthentication|nonce/i.test(m) ? 'O banco está exigindo confirmação por e-mail para trocar a senha. Peça ao coordenador para desligar isso em Authentication → Providers, ou troque pelo painel do Supabase.'
+        : /weak|short|least|breach/i.test(m) ? 'Senha fraca demais — misture letras, números e um símbolo.'
+        : /session|expired|jwt|not authenticated/i.test(m) ? 'Sua sessão expirou. Saia, entre de novo e tente outra vez.'
+        : /failed to fetch|network/i.test(m) ? 'Sem internet ou banco fora do ar. Tente de novo.'
+        : 'Não consegui trocar a senha: '+m);
+      return;
+    }
+    dlg.close(); toast('Senha trocada ✓');
+  };
+  dlg.showModal();
+  setTimeout(()=>{ try{ $('#cnNova').focus(); }catch(e){} },50);
+};
+
 /* ================= papéis ================= */
 function applyRole(){
   const ath = S.role==='athlete';
@@ -2011,8 +2057,8 @@ async function entrarNoClube(){
   $('#login').hidden=true; document.body.classList.remove('trancado');
   $('#st').classList.add('on');
   $('#st').title='Banco do clube · '+(nome||user.email)+' · '+papel;
-  const sair=$('#sair'); sair.hidden=false;
-  sair.onclick=async()=>{ try{ await S.sb.auth.signOut(); }catch(e){} location.reload(); };
+  S.email=user.email||'';
+  const conta=$('#conta'); conta.hidden=false; conta.onclick=abrirConta;
   ligarColecoes();
 }
 (async()=>{

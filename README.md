@@ -27,6 +27,9 @@ O trimestre exibido é escolhido pelas setas `‹ ›` no topo — todo o sistem
 - **Treinador** — acesso total a todos os módulos.
 - **Atleta** — vê apenas a aba Jogos: lança as próprias partidas e abre os relatórios de partida (📊).
 
+O botão **conta**, no topo, mostra com quem você está conectado, troca a sua
+senha e sai da conta.
+
 ## Banco de dados
 
 O app fala com o banco por uma interface única — `collection().add / doc().set /
